@@ -1421,119 +1421,271 @@
             }
         }
 
-        function drawSOCGraph(t) {
-   // [추가] 시점을 1.35배 확대하고 중앙 위치를 보정합니다.
+       function drawSOCGraph(t) {
+    ctx.save();
+    
+    // 카메라 위치/스케일 강제 초기화 후 중앙 정렬
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const VW = 1000;
+    const VH = 650;
+    const zoom = Math.min(width / VW, height / VH) * 0.8;
     ctx.translate(width / 2, height / 2);
-    ctx.scale(1.5, 1.5); // 숫자를 높일수록(예: 1.4, 1.5) 시점이 가깝게 당겨집니다.
-    ctx.translate(-width / 2, -height *13 / 24);
-            const cx = width/2, w = Math.min(720, width*0.82), h = Math.min(360, height*0.58);
-            const left = cx-w/2, top = height/2-h/2-12, bottom = top+h;
-            const yMin = 0, yMax = 4.35, toX = theta => left + theta*w, toY = v => bottom - (v-yMin)/(yMax-yMin)*h;
-            const up = theta => 3.62 + 0.42*theta + 0.10*Math.tanh((theta-0.58)*6);
-            const un = theta => 0.39 - 0.27*theta + 0.025*Math.sin(theta*Math.PI*2);
-            const uCell = theta => up(theta)-un(theta);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-VW / 2, -VH / 2);
 
-            ctx.fillStyle='#0f172a'; ctx.fillRect(left-12, top-30, w+24, h+100);
-            ctx.strokeStyle='#334155'; ctx.lineWidth=2; ctx.strokeRect(left, top, w, h);
-            ctx.font='12px sans-serif'; ctx.textAlign='right';
-            for(let v=0; v<=4; v++) { const y=toY(v); ctx.strokeStyle='#1e293b'; ctx.lineWidth=1; ctx.beginPath(); ctx.moveTo(left,y); ctx.lineTo(left+w,y); ctx.stroke(); ctx.fillStyle='#94a3b8'; ctx.fillText(`${v.toFixed(1)} V`,left-8,y+4); }
-            for(let i=0; i<=4; i++) { const theta=i/4, x=toX(theta); ctx.strokeStyle='#1e293b'; ctx.beginPath(); ctx.moveTo(x,top); ctx.lineTo(x,bottom); ctx.stroke(); ctx.textAlign='center'; ctx.fillStyle='#cbd5e1'; ctx.fillText(`${Math.round(theta*100)}%`,x,bottom+19); }
+    // 크기와 배치 키우기
+    const cx = VW / 2, w = 860, h = 420; 
+    const left = cx - w / 2, top = VH / 2 - h / 2 - 15, bottom = top + h;
+    const yMin = 0, yMax = 4.35;
+    const toX = theta => left + theta * w;
+    const toY = v => bottom - (v - yMin) / (yMax - yMin) * h;
+    
+    // 전압 곡선 수식
+    const up = theta => 3.62 + 0.42 * theta + 0.10 * Math.tanh((theta - 0.58) * 6);
+    const un = theta => 0.39 - 0.27 * theta + 0.025 * Math.sin(theta * Math.PI * 2);
+    const uCell = theta => up(theta) - un(theta);
 
-            const curves=[{fn:up,color:'#f472b6',name:'양극 Uₚ'},{fn:un,color:'#a3e635',name:'음극 Uₙ'},{fn:uCell,color:'#38bdf8',name:'셀 Ucell'}];
-            curves.forEach(({fn,color}) => { ctx.beginPath(); ctx.strokeStyle=color; ctx.lineWidth=3; for(let i=0;i<=160;i++){ const theta=i/160, x=toX(theta), y=toY(fn(theta)); if(i===0)ctx.moveTo(x,y);else ctx.lineTo(x,y); } ctx.stroke(); });
-            ctx.font='bold 13px sans-serif'; ctx.textAlign='left'; curves.forEach(({color,name},i)=>{ ctx.fillStyle=color; ctx.fillRect(left+12+i*125,top-19,10,10); ctx.fillStyle='#e2e8f0'; ctx.fillText(name,left+27+i*125,top-10); });
+    // 배경 및 테두리 (박스 크기 확대)
+    ctx.fillStyle = '#0f172a'; ctx.fillRect(left - 15, top - 45, w + 30, h + 130);
+    ctx.strokeStyle = '#334155'; ctx.lineWidth = 2.5; ctx.strokeRect(left, top, w, h);
+    
+    // Y축 전압 눈금
+    ctx.font = '14px sans-serif'; ctx.textAlign = 'right';
+    for(let v = 0; v <= 4; v++) { 
+        const y = toY(v); 
+        ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.5; 
+        ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + w, y); ctx.stroke(); 
+        ctx.fillStyle = '#94a3b8'; ctx.fillText(`${v.toFixed(1)} V`, left - 10, y + 5); 
+    }
+    
+    // X축 SOC 눈금
+    for(let i = 0; i <= 4; i++) { 
+        const theta = i / 4, x_pos = toX(theta); 
+        ctx.strokeStyle = '#1e293b'; ctx.beginPath(); ctx.moveTo(x_pos, top); ctx.lineTo(x_pos, bottom); ctx.stroke(); 
+        ctx.textAlign = 'center'; ctx.fillStyle = '#cbd5e1'; ctx.fillText(`${Math.round(theta * 100)}%`, x_pos, bottom + 24); 
+    }
 
-            const theta=(Math.sin(t*0.0007)+1)/2, charging=Math.cos(t*0.0007)>=0, xp=0.08+0.84*theta, xn=0.90-0.80*theta, x=toX(theta);
-            ctx.setLineDash([6,5]); ctx.strokeStyle='#facc15'; ctx.lineWidth=2; ctx.beginPath(); ctx.moveTo(x,top);ctx.lineTo(x,bottom);ctx.stroke();ctx.setLineDash([]);
-            [{v:up(theta),c:'#f472b6'},{v:un(theta),c:'#a3e635'},{v:uCell(theta),c:'#38bdf8'}].forEach(({v,c})=>{ctx.beginPath();ctx.arc(x,toY(v),5,0,Math.PI*2);ctx.fillStyle=c;ctx.fill();});
-            ctx.fillStyle='#f8fafc'; ctx.font='bold 14px sans-serif'; ctx.textAlign='left';
-            ctx.fillStyle=charging?'#60a5fa':'#f59e0b'; ctx.fillText(charging?'충전 중: 점과 선이 오른쪽(SOC 증가)으로 이동':'방전 중: 점과 선이 왼쪽(SOC 감소)으로 이동',left+12,top-42);
-            ctx.fillStyle='#f8fafc'; ctx.fillText(`θ=${(theta*100).toFixed(0)}%  |  Uₚ=${up(theta).toFixed(2)} V  Uₙ=${un(theta).toFixed(2)} V  Ucell=${uCell(theta).toFixed(2)} V`,left+12,top+h+43);
-            ctx.font='12px sans-serif'; ctx.fillStyle='#94a3b8'; ctx.textAlign='center';
-            ctx.fillText(`SOC (θ)     xₚ=${xp.toFixed(2)}     xₙ=${xn.toFixed(2)}`,cx,bottom+65);
-            ctx.save();ctx.translate(left-44,top+h/2);ctx.rotate(-Math.PI/2);ctx.fillText('평형 전위 / OCV',0,0);ctx.restore();
-        }
+    // 전압 곡선 그리기 (선 굵기 확대)
+    const curves = [
+        {fn: up, color: '#f472b6', name: '양극 Uₚ'},
+        {fn: un, color: '#a3e635', name: '음극 Uₙ'},
+        {fn: uCell, color: '#38bdf8', name: '셀 Ucell'}
+    ];
+    curves.forEach(({fn, color}) => { 
+        ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 4; 
+        for(let i = 0; i <= 200; i++){ 
+            const theta = i / 200, x_pos = toX(theta), y_pos = toY(fn(theta)); 
+            if(i === 0) ctx.moveTo(x_pos, y_pos); else ctx.lineTo(x_pos, y_pos); 
+        } 
+        ctx.stroke(); 
+    });
+    
+    // 범례 표시
+    ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; 
+    curves.forEach(({color, name}, i)=>{ 
+        ctx.fillStyle = color; ctx.fillRect(left + 15 + i * 140, top - 26, 12, 12); 
+        ctx.fillStyle = '#e2e8f0'; ctx.fillText(name, left + 35 + i * 140, top - 15); 
+    });
+
+    // 실시간 이동 애니메이션 (점과 수직선)
+    const theta = (Math.sin(t * 0.0007) + 1) / 2;
+    const charging = Math.cos(t * 0.0007) >= 0;
+    const xp = 0.08 + 0.84 * theta;
+    const xn = 0.90 - 0.80 * theta;
+    const currentX = toX(theta);
+    
+    ctx.setLineDash([6, 5]); ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.5; 
+    ctx.beginPath(); ctx.moveTo(currentX, top); ctx.lineTo(currentX, bottom); ctx.stroke(); ctx.setLineDash([]);
+    
+    [{v: up(theta), c: '#f472b6'}, {v: un(theta), c: '#a3e635'}, {v: uCell(theta), c: '#38bdf8'}].forEach(({v, c}) => {
+        ctx.beginPath(); ctx.arc(currentX, toY(v), 7, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
+    });
+    
+    // 상단 및 하단 상태 텍스트
+    ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
+    ctx.fillStyle = charging ? '#60a5fa' : '#f59e0b'; 
+    ctx.fillText(charging ? '충전 중: 점과 선이 오른쪽(SOC 증가)으로 이동' : '방전 중: 점과 선이 왼쪽(SOC 감소)으로 이동', left + 15, top - 52);
+    
+    ctx.fillStyle = '#f8fafc'; 
+    ctx.fillText(`θ=${(theta * 100).toFixed(0)}%  |  Uₚ=${up(theta).toFixed(2)} V  Uₙ=${un(theta).toFixed(2)} V  Ucell=${uCell(theta).toFixed(2)} V`, left + 15, top + h + 55);
+    
+    ctx.font = '14px sans-serif'; ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center';
+    ctx.fillText(`SOC (θ)     xₚ=${xp.toFixed(2)}     xₙ=${xn.toFixed(2)}`, cx, bottom + 80);
+    
+    // Y축 제목 회전
+    ctx.save(); ctx.translate(left - 50, top + h / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('평형 전위 / OCV', 0, 0); ctx.restore();
+
+    ctx.restore(); // 스케일 리셋
+}
 
         function drawECMModel() {
-   // [추가] 시점을 1.35배 확대하고 중앙 위치를 보정합니다.
+    ctx.save();
+    
+    // 카메라 위치/스케일 강제 초기화 후 중앙 정렬
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    const VW = 1000;
+    const VH = 650;
+    const zoom = Math.min(width / VW, height / VH) * 0.8;
     ctx.translate(width / 2, height / 2);
-    ctx.scale(1.45, 1.45); // 숫자를 높일수록(예: 1.4, 1.5) 시점이 가깝게 당겨집니다.
-    ctx.translate(-width / 2, -height*12  / 24);
-            const cx = width / 2, w = Math.min(760, width * .86), x = cx - w / 2, y = height * .26;
-            const panel = (py, ph, title) => { ctx.fillStyle = '#0f172a'; ctx.fillRect(x, py, w, ph); ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.strokeRect(x, py, w, ph); ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(title, x + 18, py + 26); };
-            const wireY = y + 112, branchL = x + w * .47, branchR = x + w * .81;
-            const zigzag = (x1, y, x2, amplitude, color) => { const n = 8, dx = (x2 - x1) / n; ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x1, y); for (let i = 1; i < n; i++) ctx.lineTo(x1 + i * dx, y + (i % 2 ? -amplitude : amplitude)); ctx.lineTo(x2, y); ctx.stroke(); };
-            panel(y, 250, 'Step 1  |  Randles Equivalent Circuit Model');
-            ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(x + 26, wireY); ctx.lineTo(x + 82, wireY); ctx.stroke();
-            ctx.beginPath(); ctx.arc(x + 112, wireY, 28, 0, Math.PI * 2); ctx.strokeStyle = '#60a5fa'; ctx.stroke(); ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('+', x + 112, wireY - 8); ctx.fillText('−', x + 112, wireY + 15); ctx.fillStyle = '#93c5fd'; ctx.font = '12px sans-serif'; ctx.fillText('V_ocv', x + 112, wireY + 52);
-            ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(x + 140, wireY); ctx.lineTo(x + 172, wireY); ctx.stroke(); zigzag(x + 172, wireY, x + 270, 10, '#facc15'); ctx.fillStyle = '#facc15'; ctx.font = 'bold 15px sans-serif'; ctx.fillText('Rs', x + 221, wireY - 22); ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif'; ctx.fillText('전하 이동 손실', x + 221, wireY + 31);
-            ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(x + 270, wireY); ctx.lineTo(branchL, wireY); ctx.moveTo(branchR, wireY); ctx.lineTo(x + w - 28, wireY); ctx.moveTo(branchL, wireY); ctx.lineTo(branchL, wireY - 58); ctx.lineTo(branchR, wireY - 58); ctx.lineTo(branchR, wireY); ctx.moveTo(branchL, wireY); ctx.lineTo(branchL, wireY + 58); ctx.lineTo(branchR, wireY + 58); ctx.lineTo(branchR, wireY); ctx.stroke();
-            ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(branchL + 112, wireY - 76); ctx.lineTo(branchL + 112, wireY - 41); ctx.moveTo(branchL + 130, wireY - 76); ctx.lineTo(branchL + 130, wireY - 41); ctx.stroke(); ctx.fillStyle = '#a3e635'; ctx.font = 'bold 15px sans-serif'; ctx.fillText('Cdl', branchL + 121, wireY - 88);
-            zigzag(branchL + 26, wireY + 58, branchL + 92, 9, '#f472b6'); ctx.fillStyle = '#f472b6'; ctx.fillText('Rct', branchL + 59, wireY + 89);
-            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2; ctx.beginPath(); ctx.roundRect(branchL + 106, wireY + 42, branchR - branchL - 132, 32, 5); ctx.stroke(); ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 13px sans-serif'; ctx.fillText('Zw', (branchL + branchR) / 2 + 18, wireY + 63);
-            ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('Rs + [Cdl ∥ (Rct + Zw)]  |  빠른 전하 이동 · 계면 축적/반응 · 느린 확산', cx, y + 225);
-            const cardsY = y + 282, cardW = (w - 32) / 3;
-            const card = (i, title, body, color) => { const px = x + i * (cardW + 16); ctx.fillStyle = '#111c30'; ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(px, cardsY, cardW, 130, 10); ctx.fill(); ctx.stroke(); ctx.fillStyle = color; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(title, px + 14, cardsY + 26); ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif'; body.forEach((line, j) => ctx.fillText(line, px + 14, cardsY + 53 + j * 19)); };
-            card(0, 'Rs · 이동 경로의 저항', ['집전체·도전재·전해질·접촉', '전하 이동의 즉각적 손실'], '#facc15');
-            card(1, 'Cdl · 계면 전하 축적', ['전극/전해질 경계에 전하 분리', '반응 전 전하를 잠시 저장'], '#a3e635');
-            card(2, 'Rct + Zw · 반응과 확산', ['Rct: 계면 전기화학 반응 장벽', 'Zw: 농도 구배를 해소하는 Li⁺ 확산'], '#38bdf8');
-        }
+    ctx.scale(zoom, zoom);
+    ctx.translate(-VW / 2, -VH * 7 / 12);
+
+    // 크기와 배치 키우기
+    const cx = VW / 2, w = 920, x = cx - w / 2, y = VH * 0.15;
+    
+    const panel = (py, ph, title) => { 
+        ctx.fillStyle = '#0f172a'; ctx.fillRect(x, py, w, ph); 
+        ctx.strokeStyle = '#334155'; ctx.lineWidth = 2.5; ctx.strokeRect(x, py, w, ph); 
+        ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; 
+        ctx.fillText(title, x + 24, py + 30); 
+    };
+    
+    const wireY = y + 140, branchL = x + w * 0.47, branchR = x + w * 0.81;
+    
+    const zigzag = (x1, y_pos, x2, amplitude, color) => { 
+        const n = 10, dx = (x2 - x1) / n; 
+        ctx.strokeStyle = color; ctx.lineWidth = 3.5; 
+        ctx.beginPath(); ctx.moveTo(x1, y_pos); 
+        for (let i = 1; i < n; i++) ctx.lineTo(x1 + i * dx, y_pos + (i % 2 ? -amplitude : amplitude)); 
+        ctx.lineTo(x2, y_pos); ctx.stroke(); 
+    };
+    
+    panel(y, 290, 'Step 1  |  Randles Equivalent Circuit Model');
+    
+    // 배터리 터미널 전선
+    ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3.5; 
+    ctx.beginPath(); ctx.moveTo(x + 30, wireY); ctx.lineTo(x + 100, wireY); ctx.stroke();
+    
+    // OCV (이상적 전압원)
+    ctx.beginPath(); ctx.arc(x + 140, wireY, 35, 0, Math.PI * 2); 
+    ctx.strokeStyle = '#60a5fa'; ctx.stroke(); 
+    ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; 
+    ctx.fillText('+', x + 140, wireY - 10); ctx.fillText('−', x + 140, wireY + 20); 
+    ctx.fillStyle = '#93c5fd'; ctx.font = '15px sans-serif'; ctx.fillText('V_ocv', x + 140, wireY + 65);
+    
+    // Rs (오믹 저항)
+    ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(x + 175, wireY); ctx.lineTo(x + 215, wireY); ctx.stroke(); 
+    zigzag(x + 215, wireY, x + 340, 12, '#facc15'); 
+    ctx.fillStyle = '#facc15'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('Rs', x + 277, wireY - 28); 
+    ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.fillText('전하 이동 손실', x + 277, wireY + 40);
+    
+    // 병렬 회로 분기선
+    ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); 
+    ctx.moveTo(x + 340, wireY); ctx.lineTo(branchL, wireY); 
+    ctx.moveTo(branchR, wireY); ctx.lineTo(x + w - 30, wireY); 
+    
+    ctx.moveTo(branchL, wireY); ctx.lineTo(branchL, wireY - 70); ctx.lineTo(branchR, wireY - 70); ctx.lineTo(branchR, wireY); 
+    ctx.moveTo(branchL, wireY); ctx.lineTo(branchL, wireY + 70); ctx.lineTo(branchR, wireY + 70); ctx.lineTo(branchR, wireY); 
+    ctx.stroke();
+    
+    // Cdl (이중층 커패시터)
+    ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 4.5; ctx.beginPath(); 
+    ctx.moveTo(branchL + 140, wireY - 95); ctx.lineTo(branchL + 140, wireY - 45); 
+    ctx.moveTo(branchL + 165, wireY - 95); ctx.lineTo(branchL + 165, wireY - 45); ctx.stroke(); 
+    ctx.fillStyle = '#a3e635'; ctx.font = 'bold 17px sans-serif'; ctx.fillText('Cdl', branchL + 152, wireY - 110);
+    
+    // Rct (전하 전달 저항)
+    zigzag(branchL + 30, wireY + 70, branchL + 115, 11, '#f472b6'); 
+    ctx.fillStyle = '#f472b6'; ctx.fillText('Rct', branchL + 72, wireY + 105);
+    
+    // Zw (Warburg 임피던스)
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5; ctx.beginPath(); 
+    ctx.roundRect(branchL + 135, wireY + 50, branchR - branchL - 175, 40, 5); ctx.stroke(); 
+    ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('Zw', (branchL + branchR) / 2 + 20, wireY + 76);
+    
+    ctx.fillStyle = '#cbd5e1'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; 
+    ctx.fillText('Rs + [Cdl ∥ (Rct + Zw)]  |  빠른 전하 이동 · 계면 축적/반응 · 느린 확산', cx, y + 265);
+    
+    // 하단 3개 설명 카드
+    const cardsY = y + 315, cardW = (w - 40) / 3;
+    const card = (i, title, body, color) => { 
+        const px = x + i * (cardW + 20); 
+        ctx.fillStyle = '#111c30'; ctx.strokeStyle = color; ctx.lineWidth = 2; 
+        ctx.beginPath(); ctx.roundRect(px, cardsY, cardW, 145, 10); ctx.fill(); ctx.stroke(); 
+        
+        ctx.fillStyle = color; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; 
+        ctx.fillText(title, px + 18, cardsY + 32); 
+        
+        ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif'; 
+        body.forEach((line, j) => ctx.fillText(line, px + 18, cardsY + 68 + j * 24)); 
+    };
+    
+    card(0, 'Rs · 이동 경로의 저항', ['집전체·도전재·전해질·접촉', '전하 이동의 즉각적 손실'], '#facc15');
+    card(1, 'Cdl · 계면 전하 축적', ['전극/전해질 경계에 전하 분리', '반응 전 전하를 잠시 저장'], '#a3e635');
+    card(2, 'Rct + Zw · 반응과 확산', ['Rct: 계면 전기화학 반응 장벽', 'Zw: 농도 구배 해소용 Li⁺ 확산'], '#38bdf8');
+
+    ctx.restore(); // 스케일 리셋
+}
 
     function drawEIS(t) {
-    // [추가] 시점을 1.35배 확대하고 중앙 위치를 보정합니다.
+    ctx.save();
+    
+    // 핵심 수정: 상위 루프의 카메라 이동/확대 효과를 완전히 무시하고 화면의 절대 좌표계로 리셋합니다.
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    
+    // 가상 해상도 (Virtual Resolution)
+    const VW = 1000;
+    const VH = 650; 
+    
+    // 화면 크기에 맞게 자동 줌 배율 계산 (여백 3%)
+    const zoom = Math.min(width / VW, height / VH) * 0.8; 
+    
+    // 가상 해상도(1000x650)를 실제 화면의 정중앙에 완벽하게 정렬
     ctx.translate(width / 2, height / 2);
-    ctx.scale(1.35, 1.35); // 숫자를 높일수록(예: 1.4, 1.5) 시점이 가깝게 당겨집니다.
-    ctx.translate(-width / 2, -height*5 / 12);
+    ctx.scale(zoom, zoom);
+    ctx.translate(-VW / 2, -VH *7 / 12);
 
-    // 3단 레이아웃을 위해 최대 너비를 조금 더 넓게(940px) 확보
-    const cx = width / 2, w = Math.min(940, width * .94), x = cx - w / 2, top = height * .12;
+    /* ----------------------------------------------------
+       이하 그리기 코드는 해상도 걱정 없이 가상 좌표(VW, VH) 기준으로 그려집니다.
+    ---------------------------------------------------- */
+    const cx = VW / 2, w = VW * 0.95, x = cx - w / 2, top = VH * 0.05;
     const f = eisState.frequency, logF = Math.log10(f), slider = eisState.slider / 100;
     
     const panel = (px, py, pw, ph, title) => { 
         ctx.fillStyle = '#0f172a'; ctx.fillRect(px, py, pw, ph); 
         ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.strokeRect(px, py, pw, ph); 
-        ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left'; 
-        ctx.fillText(title, px + 14, py + 21); 
+        ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left'; 
+        ctx.fillText(title, px + 16, py + 24); 
     };
     
-    panel(x, top, w, 90, 'Step 2  |  주파수–파형–나이키스트 연동');
-    const sx = x + 34, sy = top + 58, sw = w - 68;
+    panel(x, top, w, 85, 'Step 2  |  주파수–파형–나이키스트 연동');
+    const sx = x + 40, sy = top + 55, sw = w - 80;
     
     // 슬라이더 바
     ctx.strokeStyle = '#334155'; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + sw, sy); ctx.stroke(); 
     ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + sw * slider, sy); ctx.stroke(); 
-    ctx.beginPath(); ctx.arc(sx + sw * slider, sy, 9, 0, Math.PI * 2); ctx.fillStyle = '#f8fafc'; ctx.fill(); 
-    ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 3; ctx.stroke();
+    ctx.beginPath(); ctx.arc(sx + sw * slider, sy, 10, 0, Math.PI * 2); ctx.fillStyle = '#f8fafc'; ctx.fill(); 
+    ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 3.5; ctx.stroke();
     
-    ctx.fillStyle = '#94a3b8'; ctx.font = '11px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('저주파 0.1 Hz', sx, sy + 24); 
-    ctx.textAlign = 'right'; ctx.fillText('고주파 100 kHz', sx + sw, sy + 24); 
-    ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; 
-    ctx.fillText(`현재 f = ${f >= 1000 ? (f / 1000).toFixed(1) + ' kHz' : f.toFixed(1) + ' Hz'}`, sx + sw * slider, sy - 18);
+    ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('저주파 0.1 Hz', sx, sy + 22); 
+    ctx.textAlign = 'right'; ctx.fillText('고주파 100 kHz', sx + sw, sy + 22); 
+    ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center'; 
+    ctx.fillText(`현재 f = ${f >= 1000 ? (f / 1000).toFixed(1) + ' kHz' : f.toFixed(1) + ' Hz'}`, sx + sw * slider, sy - 20);
     
-    // 3단 구역 분할 (파형, 나이퀴스트 플롯, 설명 상자)
-    const gap = 16, waveW = w * .27, infoW = w * .27, plotW = w - waveW - infoW - gap * 2;
-    const boxY = top + 112, boxH = Math.min(315, height * .38);
+    // 3단 구역 분할
+    const gap = 16, waveW = w * 0.28, infoW = w * 0.28, plotW = w - waveW - infoW - gap * 2;
+    const boxY = top + 100, boxH = VH * 0.54; 
     const waveX = x, plotX = x + waveW + gap, infoX = plotX + plotW + gap;
     
     panel(waveX, boxY, waveW, boxH, 'AC 입력 주파수'); 
     panel(plotX, boxY, plotW, boxH, 'Nyquist Plot  |  −Im(Z) 대 Re(Z)');
     
     // 1. 파형 렌더링
-    const mid = boxY + boxH * .55, amp = boxH * .20, cycles = 1 + slider * 12, pad = 22;
-    ctx.strokeStyle = '#475569'; ctx.lineWidth = 1; ctx.beginPath(); ctx.moveTo(waveX + pad, mid); ctx.lineTo(waveX + waveW - pad, mid); ctx.stroke(); 
-    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5; ctx.beginPath(); 
+    const mid = boxY + boxH * 0.55, amp = boxH * 0.22, cycles = 1 + slider * 12, pad = 24;
+    ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(waveX + pad, mid); ctx.lineTo(waveX + waveW - pad, mid); ctx.stroke(); 
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath(); 
     for (let i = 0; i <= 160; i++) { 
         const q = i / 160, px_w = waveX + pad + q * (waveW - pad * 2), py_w = mid - Math.sin(q * Math.PI * 2 * cycles) * amp; 
         if (!i) ctx.moveTo(px_w, py_w); else ctx.lineTo(px_w, py_w); 
     } 
     ctx.stroke(); 
     const wv_q = (t * .00035) % 1; 
-    ctx.beginPath(); ctx.arc(waveX + pad + wv_q * (waveW - pad * 2), mid - Math.sin(wv_q * Math.PI * 2 * cycles) * amp, 5, 0, Math.PI * 2); 
+    ctx.beginPath(); ctx.arc(waveX + pad + wv_q * (waveW - pad * 2), mid - Math.sin(wv_q * Math.PI * 2 * cycles) * amp, 6, 0, Math.PI * 2); 
     ctx.fillStyle = '#f8fafc'; ctx.fill();
     
     // 2. 나이퀴스트 플롯 렌더링
-    const px = plotX + 46, py = boxY + 38, pw = plotW - 68, ph = boxH - 75;
-    const r0 = .10, rct = .42, tail = .28, maxX = .92, maxY = .34;
+    const px = plotX + 50, py = boxY + 45, pw = plotW - 75, ph = boxH - 85;
+    const r0 = 0.10, rct = 0.42, tail = 0.28, maxX = 0.92, maxY = 0.35;
     const mx = z => px + z / maxX * pw, my = im => py + ph - im / maxY * ph;
     
     // X, Y 축
@@ -1541,8 +1693,8 @@
     ctx.moveTo(px, py + ph); ctx.lineTo(px + pw, py + ph); 
     ctx.moveTo(px, py); ctx.lineTo(px, py + ph); ctx.stroke();
     
-    // 임피던스 궤적 (반원 + 확산 꼬리)
-    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath(); 
+    // 궤적
+    ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 4; ctx.beginPath(); 
     for (let i = 0; i <= 120; i++) { 
         const a = i * Math.PI / 120, z_val = r0 + rct * (1 - Math.cos(a)) / 2, im_val = rct * Math.sin(a) / 2; 
         if (!i) ctx.moveTo(mx(z_val), my(im_val)); else ctx.lineTo(mx(z_val), my(im_val)); 
@@ -1550,7 +1702,6 @@
     ctx.stroke(); 
     ctx.beginPath(); ctx.moveTo(mx(r0 + rct), my(0)); ctx.lineTo(mx(r0 + rct + tail), my(tail)); ctx.stroke();
     
-    // 현재 주파수에 따른 z, im 계산
     let z, im, region, cause, color; 
     if (f > 300) { 
         z = r0; im = 0; region = '고주파 · Rs'; cause = '오믹 저항'; color = '#facc15'; 
@@ -1564,14 +1715,14 @@
         region = '저주파 · Warburg'; cause = 'Li⁺ 이온 내부 확산'; color = '#a3e635'; 
     }
 
-    // 극형식 (크기 및 위상각) 벡터 연동 렌더링
+    // 벡터 점선
     const orgX = mx(0), orgY = my(0);     
     const currX = mx(z), currY = my(im);  
     
     ctx.save();
-    ctx.setLineDash([4, 4]);
+    ctx.setLineDash([5, 5]);
     ctx.strokeStyle = '#94a3b8';
-    ctx.lineWidth = 1.5;
+    ctx.lineWidth = 2;
     ctx.beginPath(); ctx.moveTo(orgX, orgY); ctx.lineTo(currX, currY); ctx.stroke();
     ctx.restore();
 
@@ -1579,52 +1730,53 @@
     const zAng = Math.atan2(im, z) * 180 / Math.PI;
     const canvasAng = Math.atan2(currY - orgY, currX - orgX); 
 
-    const arcRad = 35; 
+    // 각도 표시
+    const arcRad = 45; 
     ctx.beginPath(); ctx.arc(orgX, orgY, arcRad, 0, canvasAng, true);
     ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 1.5; ctx.stroke();
 
-    const arcTextX = orgX + (arcRad + 22) * Math.cos(canvasAng / 2);
-    const arcTextY = orgY + (arcRad + 22) * Math.sin(canvasAng / 2);
-    ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 11px sans-serif';
+    const arcTextX = orgX + (arcRad + 26) * Math.cos(canvasAng / 2);
+    const arcTextY = orgY + (arcRad + 26) * Math.sin(canvasAng / 2);
+    ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 13px sans-serif';
     ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
     if(zMag > 0.01) ctx.fillText(`θ=${zAng.toFixed(1)}°`, arcTextX, arcTextY);
 
+    // 크기 표시
     const midX = (orgX + currX) / 2;
     const midY = (orgY + currY) / 2;
     ctx.save();
     ctx.translate(midX, midY);
     ctx.rotate(canvasAng);
     ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-    ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 12px sans-serif';
-    ctx.fillText(`|Z|=${zMag.toFixed(2)}`, 0, -6);
+    ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(`|Z|=${zMag.toFixed(2)}`, 0, -8);
     ctx.restore();
 
-    // 현재 임피던스 점(Dot)
-    ctx.beginPath(); ctx.arc(currX, currY, 7, 0, Math.PI * 2); ctx.fillStyle = '#f8fafc'; ctx.fill(); 
+    // 임피던스 점
+    ctx.beginPath(); ctx.arc(currX, currY, 8, 0, Math.PI * 2); ctx.fillStyle = '#f8fafc'; ctx.fill(); 
     ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.stroke(); 
     
-    // 축 라벨
-    ctx.fillStyle = '#facc15'; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; 
-    ctx.fillText('R₀', mx(r0), py + ph + 17); ctx.fillText('R₀ + R₁', mx(r0 + rct), py + ph + 17); 
-    ctx.fillStyle = '#94a3b8'; ctx.fillText("Re(Z)", px + pw, py + ph + 32); 
-    ctx.save(); ctx.translate(px - 27, py + 25); ctx.rotate(-Math.PI / 2); ctx.fillText('−Im(Z)', 0, 0); ctx.restore(); 
+    ctx.fillStyle = '#facc15'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; 
+    ctx.fillText('R₀', mx(r0), py + ph + 22); ctx.fillText('R₀ + R₁', mx(r0 + rct), py + ph + 22); 
+    ctx.fillStyle = '#94a3b8'; ctx.fillText("Re(Z)", px + pw, py + ph + 38); 
+    ctx.save(); ctx.translate(px - 34, py + 25); ctx.rotate(-Math.PI / 2); ctx.fillText('−Im(Z)', 0, 0); ctx.restore(); 
 
-    // 3. 오른쪽 설명 상자 (직교좌표계 & 극좌표계 해설)
+    // 3. 오른쪽 설명 상자
     const infoCardH = (boxH - gap) / 2;
     const infoCard = (i, title, textArr, accent) => {
         const bx = infoX, by = boxY + i * (infoCardH + gap);
-        ctx.fillStyle = '#111c30'; ctx.strokeStyle = accent; ctx.lineWidth = 1.5;
+        ctx.fillStyle = '#111c30'; ctx.strokeStyle = accent; ctx.lineWidth = 2;
         ctx.beginPath(); ctx.roundRect(bx, by, infoW, infoCardH, 10); ctx.fill(); ctx.stroke();
         
-        ctx.fillStyle = accent; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left';
-        ctx.fillText(title, bx + 14, by + 24);
+        ctx.fillStyle = accent; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(title, bx + 18, by + 28);
         
         textArr.forEach((line, n) => {
             const isHeader = n % 2 === 0;
-            const extraY = n > 1 ? 10 : 0; // 항목 간격 추가
+            const extraY = n > 1 ? 12 : 0; 
             ctx.fillStyle = isHeader ? accent : '#cbd5e1';
-            ctx.font = isHeader ? 'bold 12px sans-serif' : '11.5px sans-serif';
-            ctx.fillText(line, bx + 14, by + 48 + n * 17 + extraY);
+            ctx.font = isHeader ? 'bold 13px sans-serif' : '12px sans-serif';
+            ctx.fillText(line, bx + 18, by + 56 + n * 20 + extraY);
         });
     };
 
@@ -1637,29 +1789,31 @@
 
     infoCard(1, '극좌표계 (Polar)', [
         '▶ |Z| 반경 (크기)',
-        '   교류 전류 흐름을 방해하는 총 임피던스',
+        '   교류 흐름을 방해하는 총 임피던스',
         '▶ θ 위상각 (각도)',
-        '   전압·전류 시간차 (0°에 가까울수록 순수저항)'
+        '   전압·전류 시간차 (0°는 순수저항)'
     ], '#67e8f9');
 
-    // 4. 하단 상세 정보 카드 (주파수 대역별 해설)
-    const cardsY = boxY + boxH + 28, cardW = (w - 32) / 3; 
+    // 4. 하단 상세 정보 카드
+    const cardsY = boxY + boxH + gap, cardW = (w - gap * 2) / 3; 
     const card = (i, title, text, accent) => { 
-        const bx = x + i * (cardW + 16); 
-        ctx.fillStyle = '#111c30'; ctx.strokeStyle = accent; ctx.lineWidth = 1.5; 
-        ctx.beginPath(); ctx.roundRect(bx, cardsY, cardW, 102, 10); ctx.fill(); ctx.stroke(); 
-        ctx.fillStyle = accent; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'left'; 
-        ctx.fillText(title, bx + 13, cardsY + 25); 
-        ctx.fillStyle = '#cbd5e1'; ctx.font = '11.5px sans-serif'; 
-        text.forEach((line, n) => ctx.fillText(line, bx + 13, cardsY + 49 + n * 17)); 
+        const bx = x + i * (cardW + gap); 
+        ctx.fillStyle = '#111c30'; ctx.strokeStyle = accent; ctx.lineWidth = 2; 
+        ctx.beginPath(); ctx.roundRect(bx, cardsY, cardW, 100, 10); ctx.fill(); ctx.stroke(); 
+        ctx.fillStyle = accent; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; 
+        ctx.fillText(title, bx + 18, cardsY + 30); 
+        ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif'; 
+        text.forEach((line, n) => ctx.fillText(line, bx + 18, cardsY + 58 + n * 20)); 
     };
     
-    card(0, 'Rs · 고주파', ['등가회로: 직렬 Rs', '실제 원인: 전해질·금속·접촉'], '#facc15'); 
-    card(1, 'Rct ∥ Cdl · 중주파', ['등가회로: 반원', '실제 원인: 전하 전달·이중층'], '#f472b6'); 
-    card(2, 'Zᴡ · 저주파', ['등가회로: 45° 꼬리', '실제 원인: Li⁺ 내부 확산'], '#a3e635');
+    card(0, 'Rs · 고주파', ['등가회로: 직렬 Rs', '원인: 전해질·금속·접촉'], '#facc15'); 
+    card(1, 'Rct ∥ Cdl · 중주파', ['등가회로: 반원', '원인: 전하 전달·이중층'], '#f472b6'); 
+    card(2, 'Zᴡ · 저주파', ['등가회로: 45° 꼬리', '원인: Li⁺ 내부 확산'], '#a3e635');
     
-    ctx.fillStyle = color; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; 
-    ctx.fillText(`현재 위치: ${region}  —  ${cause}`, cx, cardsY + 132);
+    ctx.fillStyle = color; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; 
+    ctx.fillText(`현재 위치: ${region}  —  ${cause}`, cx, cardsY + 145);
+    
+    ctx.restore(); // 여기서 setTransform으로 초기화했던 좌표계를 루프 좌표계로 되돌립니다.
 }
 
         // 고상확산 격자를 흑연(탄소) 구조를 모사하는 육각 격자(Hexagonal Lattice)로 변경
