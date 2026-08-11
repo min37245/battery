@@ -240,7 +240,6 @@
                 <div class="bg-gray-800/80 p-4 rounded-xl border border-gray-700 text-xs text-gray-300 leading-relaxed shadow-inner space-y-3">
                     <p><strong class="text-blue-400">C-rate:</strong> PyBaMM 파라미터 셋의 정격용량을 기준으로 전류를 결정합니다.</p>
                     <p><strong class="text-cyan-400">수치해석:</strong> MATLAB <code>SPM2.m</code>의 구형 입자 Fick 확산 + TDMA + Butler–Volmer 계산 순서를 브라우저에서 그대로 수행합니다.</p>
-                    <p><strong class="text-yellow-400">온도/열화:</strong> 현재 MATLAB 코드에 온도 변화나 열화 상태변수가 없으므로 이 시뮬레이터에서도 해당 제어 및 SEI/SOH 항목을 제거했습니다.</p>
                 </div>
             </section>
 
@@ -1299,6 +1298,17 @@
                 this.thetaN=thetaN; this.thetaP=thetaP;
             }
 
+            socFromState() {
+                const lower=this.params.lowerCutoff;
+                const upper=this.params.upperCutoff;
+                const span=upper-lower;
+                if(Number.isFinite(span) && span>0) {
+                    const ocv=Number.isFinite(this.ocv)?this.ocv:Math.max(lower, Math.min(upper, this.voltage));
+                    return clamp((ocv-lower)/span,0,1);
+                }
+                return clamp(1 - this.chargeAh / Math.max(this.params.nominalCapacity, 1e-9),0,1);
+            }
+
             step() {
                 if(this.current===0){ this.computeState(); return this.state(); }
                 const P=this.params;
@@ -1315,15 +1325,9 @@
             }
 
             state() {
-                const soc=clamp(this.socFromStoich(),0,1);
+                const soc=this.socFromState();
                 return {time:this.time,soc,voltage:this.voltage,ocv:this.ocv,current:this.current,
                     thetaN:this.thetaN,thetaP:this.thetaP,eta:this.eta,etaP:this.etaP||0,etaN:this.etaN||0};
-            }
-
-            socFromStoich() {
-                // SOC is the coulomb-counted full-cell state. The MATLAB
-                // model starts from its supplied initial concentrations.
-                return clamp(1 - this.chargeAh / Math.max(this.params.nominalCapacity, 1e-9), 0, 1);
             }
         }
 
@@ -1467,6 +1471,7 @@
             referenceBusy=true;
             const makeCurve = async(direction)=>{
                 const sim=new PyBaMMSPMEngine(spmParams,{Nr:20,dt:0.1});
+                sim.chargeAh=spmEngine?spmEngine.chargeAh:0;
                 sim.setCurrent((direction==='discharge'?1:-1)*spmParams.nominalCapacity*sbState.cRate);
                 const pts=[];
                 for(let i=0;i<40000;i++){
