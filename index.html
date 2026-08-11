@@ -40,7 +40,7 @@
         
         canvas { box-shadow: inset 0 0 80px rgba(0,0,0,0.9); display: block; cursor: crosshair; }
         
-        /* KaTeX Clickable Terms (항 클릭 UI) */
+        /* KaTeX Clickable Terms */
         [data-tid] {
             cursor: pointer;
             border-bottom: 2px dashed rgba(96, 165, 250, 0.5);
@@ -212,33 +212,43 @@
     </main>
 
     <script>
-        lucide.createIcons();
+        // 수학 함수 폴리필 (안전 보장)
+        if (!Math.tanh) Math.tanh = function(x) { var e = Math.exp(2*x); return (e-1)/(e+1); };
+        if (!Math.log10) Math.log10 = function(x) { return Math.log(x) * Math.LOG10E; };
+
+        // 아이콘 로딩 폴리필 (아이콘 라이브러리가 늦게 로드되거나 실패해도 전체 코드가 죽지 않도록)
+        function safeCreateIcons() {
+            if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                window.lucide.createIcons();
+            }
+        }
+        safeCreateIcons();
 
         // ---------------------------------------------------------
         // 1. Glossary Engine
         // ---------------------------------------------------------
         const glossaryDict = {
             "전압 컷오프": "과충전과 과방전을 막기 위해 충전 또는 방전을 멈추도록 정한 셀 전압 한계입니다.",
-            "풀셀": "양극과 음극을 하나로 조합한 실제 배터리 셀입니다. 두 전극의 평형전위 차이가 풀셀 OCV가 됩니다.",
-            "BMS": "Battery Management System의 약자로, SOC·온도·전압을 감시하고 충·방전 안전 한계를 제어하는 배터리 관리 시스템입니다.",
-            "HPPC": "Hybrid Pulse Power Characterization의 약자로, 전류 펄스를 가해 순간 저항과 시간 지연 전압 응답을 측정하는 시험입니다.",
-            "NLSF": "Non-linear Least Squares Fitting의 약자로, 측정 전압과 모델 전압의 오차 제곱합이 최소가 되도록 파라미터를 찾는 방법입니다.",
-            "집전체": "전자를 외부 회로로 전달하거나 공급받는 얇은 금속 포일입니다. 양극은 산화 안정성이 높은 알루미늄(Al), 음극은 환원 안정성이 높은 구리(Cu)를 사용합니다.",
-            "활물질": "배터리 내에서 산화/환원 화학 반응의 주체가 되며 리튬 이온을 격자 사이에 저장(Intercalation)하는 핵심 물질입니다.",
-            "전위차": "두 지점 간의 전위의 차이(Voltage)로, 전자를 도선을 통해 이동시키고 일을 하게 만드는 전기적 원동력입니다.",
-            "전위": "단위 전하가 가지는 전기적 위치 에너지(Potential). 마치 물의 높이처럼 전위가 높은 곳에서 낮은 곳으로 전하가 흐르려는 성질이 있습니다.",
-            "충전상태": "배터리 전극의 전체 용량 중 현재 삽입된 리튬의 양을 비율($\\theta$ 또는 SOC)로 나타낸 것입니다.",
-            "양극재": "방전 시 리튬 이온과 전자를 받아 환원되는 물질(LCO, NCM 등). 배터리에서 전위가 가장 높습니다.",
-            "음극재": "방전 시 리튬 이온과 전자를 내어주며 산화되는 물질(흑연 등). 전위가 가장 낮습니다.",
-            "전해질": "리튬 이온이 양극과 음극 사이를 원활하게 이동할 수 있도록 돕는 액체 매개체입니다.",
-            "분리막": "양극과 음극이 물리적으로 맞닿아 단락(Short)이 발생하는 것을 막으면서 이온만 통과시키는 다공성 절연 필름입니다.",
-            "활동도": "농도가 진해질수록 이온 간 상호작용으로 인해 방해를 받으므로, 이를 보정하여 반응에 참여하는 '유효 농도'를 의미합니다.",
-            "개방전압": "외부 회로에 전류가 흐르지 않아 저항 손실이 없는 상태에서의 배터리 순수 단자 전압(OCV)입니다.",
-            "과전압": "전류를 강제로 흐르게 하기 위해 열역학적 평형 전위(OCV)를 초과하여 가해주어야 하는 추가적인 구동력($\\eta$)입니다.",
-            "교환 전류 밀도": "평형 상태에서 정방향/역방향 반응 속도가 같을 때 교환되는 동적 전류의 크기($j_0$)로, 계면 반응이 얼마나 쉬운지를 나타냅니다.",
-            "화학양론": "격자 내 빈 공간 중 리튬이 채워진 분율($x$)을 나타내는 물리화학적 지표입니다.",
-            "고상 확산": "액체 전해질이 아닌, 빽빽한 고체 활물질 격자 내부를 리튬 이온이 비집고 들어가는 매우 느린 확산 현상입니다.",
-            "등가회로": "복잡한 내부 화학 현상(반응, 확산)을 저항(R)과 커패시터(C) 같은 직관적인 전기 소자로 치환하여 모델링한 것입니다."
+            "풀셀": "양극과 음극을 하나로 조합한 실제 배터리 셀입니다.",
+            "BMS": "Battery Management System의 약자로, SOC·온도·전압을 감시하고 제어합니다.",
+            "HPPC": "Hybrid Pulse Power Characterization. 펄스를 가해 순간 저항을 측정하는 시험입니다.",
+            "NLSF": "Non-linear Least Squares Fitting. 오차 제곱합이 최소가 되도록 파라미터를 찾는 방법입니다.",
+            "집전체": "전자를 외부 회로로 전달하는 금속 포일입니다. (양극 Al, 음극 Cu)",
+            "활물질": "산화/환원 화학 반응의 주체가 되며 리튬 이온을 저장하는 핵심 물질입니다.",
+            "전위차": "두 지점 간의 전위의 차이(Voltage)로, 전자를 이동시키는 원동력입니다.",
+            "전위": "단위 전하가 가지는 전기적 위치 에너지(Potential).",
+            "충전상태": "전체 용량 중 현재 삽입된 리튬의 양을 비율(SOC)로 나타낸 것입니다.",
+            "양극재": "방전 시 리튬 이온과 전자를 받아 환원되는 물질(LCO, NCM 등).",
+            "음극재": "방전 시 리튬 이온과 전자를 내어주며 산화되는 물질(흑연 등).",
+            "전해질": "리튬 이온이 양극과 음극 사이를 이동할 수 있도록 돕는 액체 매개체입니다.",
+            "분리막": "양극과 음극의 단락을 막으면서 이온만 통과시키는 절연 필름입니다.",
+            "활동도": "농도가 진해질수록 방해를 받으므로, 이를 보정한 '유효 농도'입니다.",
+            "개방전압": "외부 회로에 전류가 흐르지 않을 때의 순수 단자 전압(OCV)입니다.",
+            "과전압": "반응을 강제로 일으키기 위해 평형 전위를 초과하여 가하는 구동력입니다.",
+            "교환 전류 밀도": "평형 상태에서 교환되는 동적 전류의 크기로, 계면 반응 활성도를 나타냅니다.",
+            "화학양론": "격자 내 빈 공간 중 리튬이 채워진 물리적 분율($x$)입니다.",
+            "고상 확산": "빽빽한 고체 활물질 격자 내부를 리튬 이온이 비집고 들어가는 느린 확산 현상입니다.",
+            "등가회로": "복잡한 내부 화학 현상을 저항(R)과 커패시터(C) 같은 전기 소자로 치환한 모델입니다."
         };
 
         const glossaryKeys = Object.keys(glossaryDict).sort((a,b) => b.length - a.length);
@@ -274,7 +284,7 @@
         };
 
         // ---------------------------------------------------------
-        // 2. Data Config (Terms, Variables, Derivations & Domains)
+        // 2. Data Config (Tutorial Steps & Equations)
         // ---------------------------------------------------------
         let appMode = 'tutorial'; 
         let currentStep = 0;
@@ -293,7 +303,7 @@
                 part: "1부: 전기화학 기초", title: "1. 깁스 자유 에너지",
                 desc: "안녕! 나는 리튬 이온($\\text{Li}^+$)입니다. 배터리가 방출할 수 있는 잠재적인 총 화학 에너지는 깁스 자유 에너지($\\Delta G$)로 규정됩니다. 이 거대한 에너지가 외부로 전자를 밀어내는 힘, 즉 전위차($E$)를 만들어냅니다.",
                 equations: [{ 
-                    eqName: "깁스 자유 에너지 방정식",
+                    eqName: "깁스 자유 에너지 전위 관계식",
                     domain: "셀 전체 (Full Cell System)",
                     derivation: "열역학적 가역 과정 최대 비팽창 일:<br><div class='text-center my-1'>$W_{\\text{elec}} = -\\Delta G$</div>전하량 $nF$가 전위차 $E$를 지날 때의 전기적 일:<br><div class='text-center my-1'>$W_{\\text{elec}} = qE = nFE$</div>두 식을 연립:<br><div class='text-center mt-1 text-blue-300'>$\\therefore \\Delta G = -nFE$</div>",
                     tex: "\\htmlData{tid=0}{\\Delta G} = \\htmlData{tid=1}{-nFE}", 
@@ -315,20 +325,20 @@
                 equations: [{ 
                     eqName: "네른스트 방정식 (Nernst Equation)",
                     domain: "활물질 입자 표면 (Electrode Surface)",
-                    derivation: "임의의 상태에서의 깁스 자유 에너지:<br><div class='text-center my-1'>$\\Delta G = \\Delta G^0 + RT \\ln Q \\quad (Q = \\frac{a_o}{a_r})$</div>전기화학 관계식 $\\Delta G = -nFE$ 대입:<br><div class='text-center my-1'>$-nFE = -nFE^0 + RT \\ln \\left(\\frac{a_o}{a_r}\\right)$</div>양변을 $-nF$로 나누어 정리:<br><div class='text-center mt-1 text-blue-300'>$\\therefore E = E^0 - \\frac{RT}{nF} \\ln \\left(\\frac{a_o}{a_r}\\right) = E^0 + \\frac{RT}{nF} \\ln \\left(\\frac{a_r}{a_o}\\right)$</div>",
-                    tex: "\\htmlData{tid=0}{E} = \\htmlData{tid=1}{E^0} + \\htmlData{tid=2}{\\frac{RT}{nF} \\ln \\frac{a_o}{a_r}}", 
+                    derivation: "임의의 상태에서의 깁스 자유 에너지:<br><div class='text-center my-1'>$\\Delta G = \\Delta G^0 + RT \\ln Q \\quad (Q = \\frac{a_{\\text{prod}}}{a_{\\text{react}}})$</div>전기화학 관계식 $\\Delta G = -nFE$ 대입:<br><div class='text-center my-1'>$-nFE = -nFE^0 + RT \\ln \\left(\\frac{a_{\\text{prod}}}{a_{\\text{react}}}\\right)$</div>양변을 $-nF$로 나누어 정리:<br><div class='text-center mt-1 text-blue-300'>$\\therefore E = E^0 - \\frac{RT}{nF} \\ln \\left(\\frac{a_{\\text{prod}}}{a_{\\text{react}}}\\right)$</div>",
+                    tex: "\\htmlData{tid=0}{E} = \\htmlData{tid=1}{E^0} \\htmlData{tid=2}{- \\frac{RT}{nF} \\ln \\frac{a_{\\text{prod}}}{a_{\\text{react}}}}", 
                     terms: [
                         {tex:"E", n:"평형 전위(OCV) 변수", d:"외부 회로에 전류가 0일 때 측정되는 열역학적 단자 전압."},
                         {tex:"E^0", n:"표준 환원 전위 항", d:"표준 상태(1기압, 특정 농도)에서 물질이 가지는 고유의 기준 전위."},
-                        {tex:"\\frac{RT}{nF} \\ln \\frac{a_o}{a_r}", n:"농도 의존 전위 보정항", d:"산화체와 환원체의 활동도 비율에 따라 기준 전위가 변화하는 정도."}
+                        {tex:"- \\frac{RT}{nF} \\ln \\frac{a_{\\text{prod}}}{a_{\\text{react}}}", n:"농도 의존 전위 보정항", d:"생성물과 반응물의 활동도 비율에 따라 기준 전위가 변화하는 정도."}
                     ],
                     variables: {
                         "R": {n:"기체 상수", d:"이상 기체 상수 ($8.314\\text{ J/mol}\\cdot\\text{K}$)"},
                         "T": {n:"절대 온도", d:"시스템의 열역학적 스케일 (Kelvin)."},
                         "n": {n:"반응 전자 수", d:"산화/환원 반응 시 교환되는 전자 수."},
                         "F": {n:"패러데이 상수", d:"전자 1몰의 전하량."},
-                        "a_o": {n:"산화체 활동도", d:"전자를 잃은 상태의 화학종의 유효 농도."},
-                        "a_r": {n:"환원체 활동도", d:"전자를 얻은 상태의 화학종의 유효 농도."}
+                        "a_{\\text{react}}": {n:"반응물 활동도 (Reactant)", d:"반응 전 상태 화학종의 유효 농도."},
+                        "a_{\\text{prod}}": {n:"생성물 활동도 (Product)", d:"반응 후 생성된 화학종의 유효 농도."}
                     }
                 }],
                 camState: { targetScale: 3.5, text: "시점: 양극 표면 밀착" }, animState: { mode: 'surface', pX: 0.28 }
@@ -414,8 +424,8 @@
                 camState: { targetScale: 3.5, text: "시점: 활물질 흑연(육각 격자) 고정 관찰" }, animState: { mode: 'solid_diff', pX: 0.85 }
             },
             {
-                part: "2부: 배터리 모델링", title: "6. 충전상태(SOC)와 개방전압(OCV)의 관계",
-                desc: "배터리의 상태를 나타내는 지표는 적용 범위에 따라 다릅니다. **화학양론비(Stoichiometry, $x$)**는 개별 **전극(Electrode)** 수준에서 활물질 격자 내 리튬이 차 있는 물리적 비율을 나타냅니다. 반면, 이 동작 한계 $[x_{\\min}, x_{\\max}]$를 0~100% 범위로 정규화한 **충전상태(SOC, $\\theta$)**는 **셀 전체(Full cell)**의 가용 잔량을 의미합니다. 셀 전체의 충전상태($\\theta$)가 변함에 따라 각 전극의 $x$가 변하고, 이에 따라 양/음극 평형전위 $U_p, U_n$이 결정되어 최종적으로 풀셀 OCV가 도출됩니다.",
+                part: "2부: 배터리 모델링", title: "6. 충전상태(SOC)와 개방전압(OCV)",
+                desc: "배터리의 상태를 나타내는 지표는 적용 범위에 따라 다릅니다. **화학양론비(Stoichiometry, $x$)**는 개별 **전극(Electrode)** 수준에서 활물질 격자 내 리튬이 차 있는 물리적 비율을 나타냅니다. 반면, 이 동작 한계 $[x_{\\min}, x_{\\max}]$를 0~100% 범위로 정규화한 **충전상태(SOC, $\\theta$)**는 **셀 전체(Full cell)**의 가용 잔량을 의미합니다.",
                 equations: [{ 
                     eqName: "화학양론비 (Stoichiometry)",
                     domain: "개별 전극 고상 (Individual Electrode)",
@@ -446,7 +456,7 @@
                 { 
                     eqName: "풀셀 개방전압 (Full-cell OCV)",
                     domain: "배터리 단자 (Cell Terminals)",
-                    derivation: "닫힌 회로 전위 평형 (전류 $I=0 \\implies \\eta=0, IR=0$):<br><div class='text-center my-1'>$V = \\phi_{s,p} - \\phi_{s,n} = U_p - U_n$</div>각 전극의 평형 전위는 해당 전극의 화학양론비 $x$에 의존:<br><div class='text-center mt-1 text-blue-300'>$\\therefore U_{\\text{cell}}(\\theta) = U_p(x_p(\\theta)) - U_n(x_n(\\theta))$</div>",
+                    derivation: "닫힌 회로 전위 평형 (전류 $I=0 \\implies \\eta=0, IR=0$):<br><div class='text-center my-1'>$V = \\phi_{s,p} - \\phi_{s,n} = U_p - U_n$</div><div class='text-center mt-1 text-blue-300'>$\\therefore U_{\\text{cell}}(\\theta) = U_p(x_p(\\theta)) - U_n(x_n(\\theta))$</div>",
                     tex: "\\htmlData{tid=0}{U_{\\text{cell}}(\\theta)} = \\htmlData{tid=1}{U_p(x_p(\\theta))} \\htmlData{tid=2}{- U_n(x_n(\\theta))}", 
                     terms: [
                         {tex:"U_{\\text{cell}}(\\theta)", n:"풀셀 OCV 항", d:"단자에서 측정되는 총 전위차."},
@@ -461,62 +471,13 @@
             },
             {
                 part: "2부: 배터리 모델링", title: "7. Randles 등가회로 모델",
-                desc: "배터리의 거시적 동특성을 모사하는 Randles 등가회로는 즉각적인 전압 강하를 나타내는 오믹 저항 $R_s$, 전극 계면의 이중층 커패시터 $C_{dl}$, 전하전달 저항 $R_{ct}$, 그리고 리튬 이온의 느린 확산을 모사하는 Warburg 임피던스 $Z_W$로 구성됩니다.",
-                equations: [
-                    {
-                        eqName: "시간 영역: Randles 상태 방정식",
-                        domain: "셀 전체 거시 응답 (Cell Macro-Response)",
-                        derivation: "Kirchhoff Voltage Law (KVL) 적용:<br><div class='text-center my-1'>$V_{\\text{cell}}(t) = V_{\\text{ocv}}(SOC) - V_{Rs}(t) - V_{RCW}(t)$</div>$V_{RCW}$는 병렬 $C_{dl}$과 직렬 $R_{ct}-Z_W$ 가지에 걸리는 전압:<br><div class='text-center mt-1 text-blue-300'>$\\therefore V_{\\text{cell}}(t) = V_{\\text{ocv}} - I R_s - V_{RCW}(t)$</div>",
-                        tex: "\\htmlData{tid=0}{V_{\\text{cell}}(t)} = \\htmlData{tid=1}{V_{\\text{ocv}}} \\htmlData{tid=2}{- I R_s} \\htmlData{tid=3}{- V_{RCW}(t)}",
-                        terms: [
-                            {tex:"V_{\\text{cell}}(t)", n:"단자 전압", d:"실제 측정하는 배터리 출력 전압."},
-                            {tex:"V_{\\text{ocv}}", n:"개방 전압", d:"잔량(SOC)에 의한 열역학적 전압."},
-                            {tex:"- I R_s", n:"오믹 전압 강하 항", d:"전해질/집전체 저항에 의해 즉시 떨어지는 전압."},
-                            {tex:"- V_{RCW}(t)", n:"RC-Warburg 분극 전압 항", d:"계면 반응과 확산 지연에 의해 서서히 발생하는 추가 전압 강하."}
-                        ],
-                        variables: {
-                            "I": {n:"인가 전류", d:"외부 회로 전류."},
-                            "R_s": {n:"직렬 오믹 저항", d:"즉각 작용하는 오믹 저항."}
-                        }
-                    },
-                    {
-                        eqName: "복소 주파수 영역: Randles 임피던스",
-                        domain: "계면 분극 및 확산 회로망 (RC-Warburg Branch)",
-                        derivation: "RC-Warburg 직병렬 회로의 복소 임피던스 합성:<br><div class='text-center my-1'>$Z_{\\text{RCW}} = \\left( j\\omega C_{dl} + \\frac{1}{R_{ct} + Z_W} \\right)^{-1}$</div><div class='text-center mt-1 text-blue-300'>$\\therefore Z(\\omega) = R_s + \\frac{R_{ct} + Z_W}{1 + j\\omega C_{dl}(R_{ct} + Z_W)}$</div>",
-                        tex: "\\htmlData{tid=0}{Z(\\omega)} = \\htmlData{tid=1}{R_s} + \\htmlData{tid=2}{\\frac{R_{ct} + Z_W}{1 + j\\omega C_{dl}(R_{ct} + Z_W)}}",
-                        terms: [
-                            {tex:"Z(\\omega)", n:"전체 복소 임피던스", d:"교류 주파수 $\\omega$에 대한 배터리 전체의 저항 성분."},
-                            {tex:"R_s", n:"오믹 저항", d:"가장 빠르게 응답하는 직렬 저항."},
-                            {tex:"\\frac{R_{ct} + Z_W}{1 + j\\omega C_{dl}(R_{ct} + Z_W)}", n:"계면 및 확산 임피던스", d:"이중층 커패시터와 전하전달/확산 저항의 병렬 합성항."}
-                        ],
-                        variables: {
-                            "R_{ct}": {n:"전하 전달 저항", d:"계면 전기화학 반응 저항."},
-                            "C_{dl}": {n:"이중층 커패시턴스", d:"전극 표면의 전기적 용량."},
-                            "Z_W": {n:"Warburg 임피던스", d:"저주파 영역에서 나타나는 확산 저항."}
-                        }
-                    },
-                    {
-                        eqName: "Warburg 임피던스",
-                        domain: "활물질 입자 내부 (Solid Particle Bulk)",
-                        derivation: "Fick의 확산 법칙을 교류 주파수 조건에서 푼 반무한 확산해:<br><div class='text-center mt-1 text-blue-300'>$\\therefore Z_W = \\frac{\\sigma_w}{\\sqrt{\\omega}} (1 - j)$</div>",
-                        tex: "\\htmlData{tid=0}{Z_W} = \\htmlData{tid=1}{\\frac{\\sigma_w}{\\sqrt{\\omega}}} \\htmlData{tid=2}{(1 - j)}",
-                        terms: [
-                            {tex:"Z_W", n:"Warburg 임피던스", d:"농도 구배 해소를 위한 이온 확산의 지연 효과를 나타내는 복소 저항."},
-                            {tex:"\\frac{\\sigma_w}{\\sqrt{\\omega}}", n:"크기(Magnitude) 항", d:"주파수의 제곱근에 반비례하여 저주파수에서 그 영향이 커짐."},
-                            {tex:"(1 - j)", n:"위상(Phase) 항", d:"실수부와 허수부가 동일하여 복소평면에서 45도 궤적을 그림."}
-                        ],
-                        variables: {
-                            "\\sigma_w": {n:"Warburg 계수", d:"물질의 확산 속도 특성치."},
-                            "\\omega": {n:"각주파수", d:"인가 교류 주파수."},
-                            "j": {n:"허수 단위", d:"위상 지연 수학적 표현."}
-                        }
-                    }
-                ],
+                desc: "배터리는 전류를 뽑아 쓸 때 전압이 즉시 떨어지기도 하고 서서히 변하기도 합니다. 이러한 전압 지연 응답을 전기 기호로 나타낸 것이 **Randles 등가회로**입니다.<br><br>가장 빠른 **오믹 저항($R_s$)**은 즉각적인 전압 하락을 만듭니다. 이후 **이중층 커패시터($C_{dl}$)**와 **전하 전달 저항($R_{ct}$)**에 의해 전압이 곡선을 그리며 서서히 떨어집니다. 마지막으로 리튬 이온이 입자 내부로 깊숙이 파고드는 아주 느린 확산 현상은 **워버그 임피던스(Warburg Impedance, $Z_W$)**라는 소자로 반영되어, 장기적인 전압 완만화 효과를 완벽하게 모사합니다.",
+                equations: [], // 수식 완전 제거
                 camState: { targetScale: 1.0, text: "시점: Randles 등가회로", hint: false }, animState: { mode: 'ecm_model', pX: 0.5 }
             },
             {
                 part: "2부: 배터리 모델링", title: "8. EIS와 나이키스트 플롯",
-                desc: "다양한 주파수의 교류(AC) 전류를 인가하면, 고주파는 **오믹 저항($R_s$)**, 중주파는 **전하전달 반원($R_{ct} \\parallel C_{dl}$)**, 저주파는 **고상 확산 꼬리(Warburg)** 등 속도가 다른 물리 현상을 분리해서 볼 수 있습니다.",
+                desc: "배터리를 분해하지 않고 내부의 건강 상태나 문제 원인을 파악하려면 어떻게 해야 할까요? **전기화학 임피던스 분광법(EIS)**이 그 해답입니다.<br><br>배터리에 아주 미세하고 빠른 교류(AC) 진동부터, 아주 느린 교류 진동까지 주파수를 바꿔가며 흘려봅니다. 반응하는 속도가 제각각인 배터리 내부 현상들이 주파수에 따라 분리되어 나타납니다.<br><br>즉, **고주파**로는 도선/전해질의 즉각적 저항을, **중주파**로는 계면의 화학반응 저항을, **저주파**로는 리튬 이온의 느린 확산 능력을 따로따로 '해부'해서 볼 수 있는 강력한 진단 도구입니다.",
                 equations: [{ 
                     eqName: "Randles 모델 복소 임피던스",
                     domain: "교류 주파수 영역 (AC Frequency Domain)",
@@ -536,7 +497,7 @@
                 camState: { targetScale: 1.0, text: "시점: EIS 주파수–나이키스트 연동", hint: false }, animState: { mode: 'eis', pX: 0.5 }
             },
             {
-                part: "2부: 배터리 모델링", title: "9. 다공성 전극 모델 (P2D, Pseudo-Two-Dimensional Model)",
+                part: "2부: 배터리 모델링", title: "9. Pseudo-Two-Dimensional (P2D) Model",
                 desc: "P2D(Pseudo-2D, Doyle-Fuller-Newman) 모델은 배터리의 물리 거동을 거시적 전극 두께($x$)와 미시적 입자 반경($r$) 차원으로 완전 연립하여 해석하는 궁극의 정밀 모델입니다.<br><br>**아래 5개의 방정식 박스를 클릭하면 카메라가 해당 물리 현상이 일어나는 배터리의 위치로 줌인합니다.**",
                 equations: [
                     {
@@ -692,7 +653,6 @@
         function renderEquations(eqArray) {
             const container = document.getElementById('equation-container');
             container.innerHTML = '';
-            
             if (!eqArray || eqArray.length === 0) return;
             
             eqArray.forEach(eqItem => {
@@ -705,7 +665,6 @@
                     titleH.textContent = eqItem.eqName; block.appendChild(titleH);
                 }
 
-                // Domain (작용 범위) 표기 추가
                 if (eqItem.domain) {
                     const domainDiv = document.createElement('div');
                     domainDiv.className = 'text-[11px] text-emerald-400 font-semibold mb-1 bg-emerald-900/20 px-2.5 py-1 rounded border border-emerald-800/50 flex items-center justify-center gap-1.5 w-full';
@@ -718,13 +677,11 @@
                 katex.render(eqItem.tex, mathDiv, {displayMode: true, throwOnError: false, trust: true});
                 block.appendChild(mathDiv);
                 
-                // 컨텍스트 설명 박스 (해당 수식 바로 아래 생성)
                 const expBox = document.createElement('div');
                 expBox.className = 'bg-blue-900/20 border border-blue-800/50 p-4 rounded-xl hidden transition-all mt-1 mb-2 w-full text-left';
                 expBox.innerHTML = `<h4 class="text-sm font-bold text-blue-300 mb-2 flex items-center gap-2"><i data-lucide="info" class="w-4 h-4"></i><span class="term-name"></span></h4><p class="text-sm text-gray-300 term-desc"></p>`;
                 block.appendChild(expBox);
 
-                // 항(Term) 클릭 이벤트 연결
                 if (eqItem.terms && eqItem.terms.length > 0) {
                     mathDiv.querySelectorAll('[data-tid]').forEach(el => {
                         el.addEventListener('click', (e) => {
@@ -734,109 +691,75 @@
                                 other.style.borderBottom = "2px dashed rgba(96, 165, 250, 0.5)";
                             });
                             block.querySelectorAll('.math-var-btn').forEach(btn => btn.classList.replace('bg-blue-900/50', 'bg-gray-800'));
-                            
-                            el.style.backgroundColor = 'rgba(59, 130, 246, 0.2)';
-                            el.style.borderBottom = "2px solid rgba(96, 165, 250, 0.9)";
-                            
-                            const tid = parseInt(el.getAttribute('data-tid'));
-                            const termData = eqItem.terms[tid];
+                            el.style.backgroundColor = 'rgba(59, 130, 246, 0.2)'; el.style.borderBottom = "2px solid rgba(96, 165, 250, 0.9)";
+                            const tid = parseInt(el.getAttribute('data-tid')); const termData = eqItem.terms[tid];
                             if(termData) {
                                 expBox.classList.remove('hidden');
-                                const titleSpan = document.createElement('span');
-                                katex.render(termData.tex, titleSpan, {throwOnError: false});
+                                const titleSpan = document.createElement('span'); katex.render(termData.tex, titleSpan, {throwOnError: false});
                                 expBox.querySelector('.term-name').innerHTML = titleSpan.outerHTML + ` &mdash; ${termData.n}`;
-                                const descP = expBox.querySelector('.term-desc');
-                                descP.innerHTML = parseGlossaryText(termData.d);
-                                renderInlineMath(descP);
-                                lucide.createIcons();
+                                const descP = expBox.querySelector('.term-desc'); descP.innerHTML = parseGlossaryText(termData.d);
+                                renderInlineMath(descP); safeCreateIcons();
                             }
                         });
                     });
                 }
 
-                // 변수(Variable) 버튼 나열
                 if (eqItem.variables) {
-                    const varBox = document.createElement('div');
-                    varBox.className = 'flex flex-wrap gap-1 justify-center w-full mt-1';
+                    const varBox = document.createElement('div'); varBox.className = 'flex flex-wrap gap-1 justify-center w-full mt-1';
                     for (let mathVar in eqItem.variables) {
-                        const btn = document.createElement('button');
-                        btn.className = 'math-var-btn text-blue-100 bg-gray-800 border border-gray-700 text-sm';
+                        const btn = document.createElement('button'); btn.className = 'math-var-btn text-blue-100 bg-gray-800 border border-gray-700 text-sm';
                         katex.render(mathVar, btn, {throwOnError: false});
-                        
                         btn.onclick = (e) => {
                             e.stopPropagation();
                             mathDiv.querySelectorAll('[data-tid]').forEach(other => {
-                                other.style.backgroundColor = 'transparent';
-                                other.style.borderBottom = "2px dashed rgba(96, 165, 250, 0.5)";
+                                other.style.backgroundColor = 'transparent'; other.style.borderBottom = "2px dashed rgba(96, 165, 250, 0.5)";
                             });
                             block.querySelectorAll('.math-var-btn').forEach(b => b.classList.replace('bg-blue-900/50', 'bg-gray-800'));
                             btn.classList.replace('bg-gray-800', 'bg-blue-900/50');
-                            
                             expBox.classList.remove('hidden');
-                            const titleSpan = document.createElement('span');
-                            katex.render(mathVar, titleSpan, {throwOnError: false});
+                            const titleSpan = document.createElement('span'); katex.render(mathVar, titleSpan, {throwOnError: false});
                             expBox.querySelector('.term-name').innerHTML = titleSpan.outerHTML + ` &mdash; ${eqItem.variables[mathVar].n}`;
-                            const descP = expBox.querySelector('.term-desc');
-                            descP.innerHTML = parseGlossaryText(eqItem.variables[mathVar].d);
-                            renderInlineMath(descP);
-                            lucide.createIcons();
+                            const descP = expBox.querySelector('.term-desc'); descP.innerHTML = parseGlossaryText(eqItem.variables[mathVar].d);
+                            renderInlineMath(descP); safeCreateIcons();
                         };
                         varBox.appendChild(btn);
                     }
                     block.appendChild(varBox);
                 }
 
-                // Derivation Box (유도 과정 박스) 생성
-                const derivBox = document.createElement('div');
-                derivBox.className = 'bg-gray-800/80 border border-gray-600 p-4 rounded-xl hidden transition-all mt-2 w-full text-left';
+                const derivBox = document.createElement('div'); derivBox.className = 'bg-gray-800/80 border border-gray-600 p-4 rounded-xl hidden transition-all mt-2 w-full text-left';
                 const derivContentHTML = eqItem.derivation ? parseGlossaryText(eqItem.derivation) : "상세 유도 과정이 제공되지 않았습니다.";
                 derivBox.innerHTML = `<h4 class="text-sm font-bold text-gray-200 mb-2 flex items-center gap-2"><i data-lucide="flask-conical" class="w-4 h-4 text-purple-400"></i>유도 과정</h4><div class="text-[0.85rem] text-gray-300 leading-relaxed deriv-content">${derivContentHTML}</div>`;
                 block.appendChild(derivBox);
 
-                // 전체 박스 클릭 이벤트 (유도 과정 토글 및 P2D 타겟 연동)
                 block.addEventListener('click', (e) => {
-                    // 항목/변수/적용범위 등 하위 요소 클릭 시 무시
                     if(e.target.closest('[data-tid]') || e.target.closest('.math-var-btn') || e.target.closest('.bg-blue-900\\/20')) return; 
-
                     const isHidden = derivBox.classList.contains('hidden');
-                    
                     if (isHidden) {
                         derivBox.classList.remove('hidden');
-                        block.classList.add('border-blue-400', 'bg-gray-900');
-                        block.classList.remove('border-gray-700', 'bg-gray-950');
+                        block.classList.add('border-blue-400', 'bg-gray-900'); block.classList.remove('border-gray-700', 'bg-gray-950');
                     } else {
                         derivBox.classList.add('hidden');
-                        // 만약 P2D 연동 대상이 아니거나, 현재 활성화된 P2D 타겟이 아니라면 원래 스타일로 복구
                         if (!eqItem.p2dTarget || activeAnimState.p2dTarget !== eqItem.p2dTarget) {
-                            block.classList.remove('border-blue-400', 'bg-gray-900');
-                            block.classList.add('border-gray-700', 'bg-gray-950');
+                            block.classList.remove('border-blue-400', 'bg-gray-900'); block.classList.add('border-gray-700', 'bg-gray-950');
                         }
                     }
-
                     if (eqItem.p2dTarget) {
                         container.querySelectorAll('.bg-gray-950, .bg-gray-900').forEach(b => {
-                            if (b !== block) {
-                                b.classList.remove('border-blue-400', 'bg-gray-900'); 
-                                b.classList.add('border-gray-700', 'bg-gray-950');
-                            }
+                            if (b !== block) { b.classList.remove('border-blue-400', 'bg-gray-900'); b.classList.add('border-gray-700', 'bg-gray-950'); }
                         });
-                        block.classList.add('border-blue-400', 'bg-gray-900'); 
-                        block.classList.remove('border-gray-700', 'bg-gray-950');
+                        block.classList.add('border-blue-400', 'bg-gray-900'); block.classList.remove('border-gray-700', 'bg-gray-950');
                         activeAnimState.p2dTarget = eqItem.p2dTarget;
                     }
                 });
-
                 container.appendChild(block);
             });
-            
-            // Render Inline Math in Derivations
             container.querySelectorAll('.deriv-content').forEach(el => renderInlineMath(el));
-            lucide.createIcons();
+            safeCreateIcons();
         }
 
         function renderSPMComparison() {
-            const container = document.getElementById('equation-container');
-            container.innerHTML = '';
+            const container = document.getElementById('equation-container'); container.innerHTML = '';
             const rows = [
                 ['1. 고상 확산', '\\frac{\\partial c_s}{\\partial t}=\\frac{1}{r^2}\\frac{\\partial}{\\partial r}(D_s r^2\\frac{\\partial c_s}{\\partial r})', '\\frac{\\partial c_s}{\\partial t}=\\frac{D_s}{r^2}\\frac{\\partial}{\\partial r}(r^2\\frac{\\partial c_s}{\\partial r})', [['c_s','고상 리튬 농도','P2D는 전극 위치와 입자 내부 위치별 농도를 계산합니다.'],['D_s','고상 확산계수','활물질 입자 안에서 리튬이 퍼지는 속도입니다.']], [['c_s','대표 입자 농도','SPM은 전극 전체를 하나의 대표 입자로 보고 이 농도만 계산합니다.'],['r','입자 반경 좌표','전극 두께 방향을 없애고 입자 반경 방향만 남깁니다.']]],
                 ['2. 전해질 질량 보존', '\\varepsilon_e\\frac{\\partial c_e}{\\partial t}=\\nabla\\cdot(D_e^{\\mathrm{eff}}\\nabla c_e)+\\frac{1-t_+^0}{F}a_sj', 'c_e=\\mathrm{const.}', [['c_e','전해질 농도','P2D는 전극·분리막 전체의 전해질 농도 분포를 풉니다.'],['D_e^{\\mathrm{eff}}','유효 확산계수','다공성 구조의 굴곡도를 반영한 전해질 확산계수입니다.']], [['c_e=\\mathrm{const.}','균일 전해질 가정','SPM은 전해질 농도가 공간과 시간에 따라 변하지 않는다고 둡니다.'],['\\nabla c_e=0','농도 구배 제거','전해질 확산과 농도 과전압을 계산하지 않습니다.']]],
@@ -853,10 +776,8 @@
             currentStep = idx; const step = tutorialSteps[idx];
             const isSPM = step.animState.spm === true;
             const tutorialSidebar = document.getElementById('sidebar-tutorial');
-            tutorialSidebar.classList.toggle('w-[880px]', isSPM);
-            tutorialSidebar.classList.toggle('w-[440px]', !isSPM);
-            document.getElementById('part-title').textContent = step.part;
-            document.getElementById('step-title').textContent = step.title;
+            tutorialSidebar.classList.toggle('w-[880px]', isSPM); tutorialSidebar.classList.toggle('w-[440px]', !isSPM);
+            document.getElementById('part-title').textContent = step.part; document.getElementById('step-title').textContent = step.title;
             const stepDesc = document.getElementById('step-desc');
             stepDesc.innerHTML = parseGlossaryText(step.desc); renderInlineMath(stepDesc);
             
@@ -865,7 +786,7 @@
                 : step.animState.mode === 'p2d' 
                 ? `<i data-lucide="function-square" class="w-4 h-4 text-blue-400"></i> P2D 지배방정식 (박스 클릭: 카메라 연동)`
                 : `<i data-lucide="function-square" class="w-4 h-4 text-blue-400"></i> 지배방정식 (수식의 항/변수 클릭)`;
-            lucide.createIcons();
+            safeCreateIcons();
             
             if (isSPM) renderSPMComparison(); else renderEquations(step.equations);
             if (step.animState.mode === 'p2d') {
@@ -883,8 +804,7 @@
             const eisCtrl = document.getElementById('eis-controls');
             if (step.animState.mode === 'eis') eisCtrl.classList.remove('hidden'); else eisCtrl.classList.add('hidden');
 
-            const list = document.getElementById('toc-list');
-            list.innerHTML = '';
+            const list = document.getElementById('toc-list'); list.innerHTML = '';
             tutorialSteps.forEach((s, i) => {
                 const li = document.createElement('li');
                 li.className = `flex items-center gap-2 p-1.5 rounded transition-colors ${i === currentStep ? 'bg-blue-900/50 text-blue-200 border border-blue-700 font-semibold' : 'text-gray-500 cursor-pointer hover:bg-gray-800'}`;
@@ -922,8 +842,7 @@
                 const dt = this.lastUpdate === null ? 0 : Math.min((now - this.lastUpdate) / 1000, 0.1);
                 this.lastUpdate = now;
                 const degF = sbState.deg ? sbState.cycle * (1 + (sbState.temp - 25)*0.02) : 0;
-                this.cap = this.baseCap * Math.exp(-0.00015 * degF);
-                this.sei = 10 + 0.8 * Math.sqrt(degF);
+                this.cap = this.baseCap * Math.exp(-0.00015 * degF); this.sei = 10 + 0.8 * Math.sqrt(degF);
                 const rInt = 0.05 + 0.00008 * degF;
                 
                 if (sbState.mode === 'charge') this.current = this.nominalCapacityAh * sbState.cRate;
@@ -931,9 +850,7 @@
                 else this.current = 0;
                 
                 if (sbState.mode !== 'idle') {
-                    // 프레임 간격(dt)에 시간 배속(timeScale)을 곱하여 연산 속도를 가속
                     const ds = (sbState.cRate * dt * sbState.timeScale) / 36;
-                    
                     if (sbState.mode === 'charge') sbState.soc = Math.min(100, sbState.soc + ds);
                     if (sbState.mode === 'discharge') sbState.soc = Math.max(0, sbState.soc - ds);
                 }
@@ -950,7 +867,7 @@
             document.getElementById('sidebar-tutorial').classList.add('hidden');
             document.getElementById('sidebar-sandbox').classList.remove('hidden');
             document.getElementById('cam-status').classList.add('opacity-0');
-            lucide.createIcons();
+            safeCreateIcons();
         }
         
         const setSbMode = m => {
@@ -971,13 +888,10 @@
             button.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4"></i> 열화 모드 동작 중`;
             button.disabled = true;
             document.getElementById('cycle-control').classList.remove('opacity-40', 'pointer-events-none');
-            lucide.createIcons();
+            safeCreateIcons();
         };
-
-        // 시간 배속 슬라이더 연동
         document.getElementById('slider-timescale').oninput = e => { 
-            sbState.timeScale = parseInt(e.target.value); 
-            document.getElementById('label-timescale').textContent = `${sbState.timeScale}x`; 
+            sbState.timeScale = parseInt(e.target.value); document.getElementById('label-timescale').textContent = `${sbState.timeScale}x`; 
         };
 
         function updateSandboxUI() {
@@ -991,16 +905,26 @@
         // 5. Canvas Engine
         // ---------------------------------------------------------
         const canvas = document.getElementById('mainCanvas'); const ctx = canvas.getContext('2d');
-        const observer = new ResizeObserver(entries => { width = entries[0].contentRect.width; height = entries[0].contentRect.height; canvas.width = width; canvas.height = height; });
-        observer.observe(document.getElementById('canvas-container'));
+        
+        // 캔버스 크기 조정 함수 (안전성 강화)
+        function resizeCanvas() {
+            const container = document.getElementById('canvas-container');
+            if (container && container.offsetWidth > 0) {
+                width = container.offsetWidth;
+                height = container.offsetHeight;
+                canvas.width = width;
+                canvas.height = height;
+            }
+        }
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
 
-        const cam = { x: 0, y: 0, scale: 1, targetX: 0, targetScale: 1 };
+        const cam = { x: width/2 || 0, y: height/2 || 0, scale: 1, targetX: width/2 || 0, targetScale: 1 };
         const particle = { x: 0.5, targetX: 0.5, radius: 4 };
         const activeAnimState = { mode: 'idle', stress: false, heat: false, spm: false, p2dTarget: null };
         const eisState = { slider: 67, frequency: 0 };
         function updateEISFrequency(value) {
-            eisState.slider = Number(value);
-            eisState.frequency = Math.pow(10, -1 + eisState.slider * 0.06);
+            eisState.slider = Number(value); eisState.frequency = Math.pow(10, -1 + eisState.slider * 0.06);
             const label = document.getElementById('eis-frequency-label');
             if (label) label.textContent = eisState.frequency >= 1000 ? `${(eisState.frequency / 1000).toFixed(1)} kHz` : `${eisState.frequency.toFixed(1)} Hz`;
         }
@@ -1012,13 +936,9 @@
             update(mode) {
                 if(mode === 'idle') return;
                 const dir = mode === 'charge' ? 1 : -1;
-                
-                // 배속이 높아지면 애니메이션 속도도 증가 (너무 번쩍거리지 않도록 로그 스케일로 제한)
                 const visSpeed = this.speed * (appMode === 'sandbox' ? (1 + Math.log10(sbState.timeScale) * 1.5) : 1);
-                
                 this.p += dir * visSpeed;
-                if(this.p > 1) this.p -= 1;
-                if(this.p < 0) this.p += 1;
+                if(this.p > 1) this.p -= 1; if(this.p < 0) this.p += 1;
             }
         }
         const electrons = Array.from({length: 80}, () => new Electron());
@@ -1027,13 +947,9 @@
         canvas.addEventListener('mousedown', e => {
             if (appMode !== 'tutorial') return;
             const rect = canvas.getBoundingClientRect(); const cx = e.clientX - rect.left;
-            
             if (currentStep === 0) {
                 const cw = width * 0.8 * cam.scale; const ox = (width/2) - cam.x*cam.scale + (width*0.1)*cam.scale;
-                
-                // Updated base widths for introductory view matching P2D proportions
                 const catW = cw * 0.4; const eleW = cw * 0.2; const anoW = cw * 0.4;
-                
                 let clicked = null, descText = "";
                 if (cx < ox) { clicked = "양극 집전체 (Al Foil)"; descText = "알루미늄 포일입니다. 외부에서 들어오는 전자를 양극재로 전달합니다."; }
                 else if (cx >= ox && cx < ox + catW) { clicked = "양극 활물질 (Cathode)"; descText = "구형 산화물 입자들이 코팅된 영역입니다. 방전 시 리튬 이온을 받아들이며 환원됩니다."; }
@@ -1049,7 +965,19 @@
 
         function getCanvasX(nx) { return width*0.1 + nx*(width*0.8); }
         function LCG(seed) { return function() { seed = (seed * 1664525 + 1013904223) % 4294967296; return seed / 4294967296; } }
-        const fixedRnd = LCG(12345); // 입자 위치 고정을 위한 전역 난수 발생기
+
+        // 안전한 둥근 사각형 그리기 (구형 브라우저 크래시 방지)
+        function drawRoundRect(ctx, x, y, w, h, r) {
+            if (w < 2 * r) r = w / 2;
+            if (h < 2 * r) r = h / 2;
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.arcTo(x + w, y, x + w, y + h, r);
+            ctx.arcTo(x + w, y + h, x, y + h, r);
+            ctx.arcTo(x, y + h, x, y, r);
+            ctx.arcTo(x, y, x + w, y, r);
+            ctx.closePath();
+        }
 
         function drawExternalWire(ch, drawElectrons, arr, mode) {
             const ox = width * 0.1; const cw = width * 0.8; const cy = height / 2;
@@ -1064,9 +992,7 @@
                 const L1 = 60; const L2 = cw + 12; const L3 = 60; const totalL = L1 + L2 + L3;
                 ctx.fillStyle = '#fde047';
                 arr.forEach(e => {
-                    e.update(mode);
-                    const d = e.p * totalL;
-                    let px, py;
+                    e.update(mode); const d = e.p * totalL; let px, py;
                     if (d < L1) { px = ox-6; py = cy-ch/2-d; }
                     else if (d < L1 + L2) { px = ox-6 + d-L1; py = cy-ch/2-60; }
                     else { px = ox+cw+6; py = cy-ch/2-60 + d-L1-L2; }
@@ -1077,8 +1003,7 @@
 
         function drawLithiumIons(ch, mode, time) {
             if (mode === 'idle') return;
-            const ox = width * .1, cw = width * .8, cy = height / 2;
-            const wC = cw * 0.4, wE = cw * 0.2; // Updated dynamically
+            const ox = width * .1, cw = width * .8, cy = height / 2, wC = cw * 0.4, wE = cw * 0.2;
             const dir = mode === 'charge' ? 1 : -1;
             ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 12px sans-serif'; ctx.textAlign = 'center';
             for (let i = 0; i < 26; i++) {
@@ -1086,36 +1011,25 @@
                 const x = ox + wC + q * wE, y = cy - ch * .32 + (i % 7) * ch * .105;
                 ctx.beginPath(); ctx.arc(x, y, 4, 0, Math.PI * 2); ctx.fill();
             }
-            const arrowX = ox + wC + wE / 2;
-            ctx.fillStyle = '#38bdf8'; ctx.fillText(`Li⁺ 이온: ${mode === 'charge' ? '양극 → 음극' : '음극 → 양극'}`, arrowX, cy + ch / 2 - 15);
+            ctx.fillStyle = '#38bdf8'; ctx.fillText(`Li⁺ 이온: ${mode === 'charge' ? '양극 → 음극' : '음극 → 양극'}`, ox + wC + wE / 2, cy + ch / 2 - 15);
             ctx.fillStyle = '#fde047'; ctx.fillText(`e⁻ 전자: ${mode === 'charge' ? '외부 회로를 통해 음극 방향' : '외부 회로를 통해 양극 방향'}`, width / 2, cy - ch / 2 - 88);
         }
 
         function drawP2DOverlay(ox, cy, cw, ch, wC, wE, wA, time) {
-            const topY = cy - ch/2;
-            const botY = cy + ch/2;
-            
+            const topY = cy - ch/2, botY = cy + ch/2;
             ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
             ctx.strokeRect(ox, topY, cw, ch);
             ctx.beginPath(); ctx.moveTo(ox + wC, topY); ctx.lineTo(ox + wC, botY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(ox + wC + wE, topY); ctx.lineTo(ox + wC + wE, botY); ctx.stroke();
+            ctx.fillStyle = '#000'; ctx.fillRect(ox - 8, topY, 8, ch); ctx.fillRect(ox + cw, topY, 8, ch);
             
-            // Current Collectors
-            ctx.fillStyle = '#000';
-            ctx.fillRect(ox - 8, topY, 8, ch);
-            ctx.fillRect(ox + cw, topY, 8, ch);
-            
-            // X-axis
-            const axisY = topY - 30;
-            ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5;
+            const axisY = topY - 30; ctx.strokeStyle = '#cbd5e1'; ctx.lineWidth = 1.5;
             ctx.beginPath(); ctx.moveTo(ox, axisY); ctx.lineTo(ox + 60, axisY); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(ox + 55, axisY - 4); ctx.lineTo(ox + 60, axisY); ctx.lineTo(ox + 55, axisY + 4); ctx.stroke();
             ctx.beginPath(); ctx.moveTo(ox, axisY - 5); ctx.lineTo(ox, axisY + 5); ctx.stroke();
             ctx.fillStyle = '#f8fafc'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center';
-            ctx.fillText("0", ox, axisY - 12);
-            ctx.fillText("x", ox + 60, axisY - 12);
+            ctx.fillText("0", ox, axisY - 12); ctx.fillText("x", ox + 60, axisY - 12);
             
-            // Dimensions
             const dimY = topY - 10;
             const drawDim = (xStart, width, label) => {
                 const cx = xStart + width/2;
@@ -1125,15 +1039,9 @@
                 ctx.beginPath(); ctx.moveTo(xStart + width - 10, dimY - 3); ctx.lineTo(xStart + width - 5, dimY); ctx.lineTo(xStart + width - 10, dimY + 3); ctx.stroke();
                 ctx.fillStyle = '#f8fafc'; ctx.fillText(label, cx, dimY + 4);
             };
-            drawDim(ox, wC, "Lₚ");
-            drawDim(ox + wC, wE, "Lₛₑₚ");
-            drawDim(ox + wC + wE, wA, "Lₙ");
+            drawDim(ox, wC, "Lₚ"); drawDim(ox + wC, wE, "Lₛₑₚ"); drawDim(ox + wC + wE, wA, "Lₙ");
             
-            // Particles Array
-            const pRad = Math.min(wC / 4.5, 32); // Increased particle size
-            const pSpacing = wC / 5;
-            const pY = cy;
-            
+            const pRad = Math.min(wC / 4.5, 32), pSpacing = wC / 5, pY = cy;
             const drawParticles = (xStart, width, color, labelN, regionName) => {
                 ctx.fillStyle = color;
                 [1, 2, 4].forEach(mult => {
@@ -1141,120 +1049,74 @@
                     ctx.beginPath(); ctx.arc(px, pY, pRad, 0, Math.PI*2); ctx.fill();
                 });
                 ctx.beginPath(); ctx.arc(xStart + width - pSpacing*2, pY, pRad, 0, Math.PI*2); ctx.fill();
-                
-                ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 18px sans-serif';
-                ctx.fillText("...", xStart + width/2, pY);
-                ctx.font = '14px sans-serif';
-                ctx.fillText(labelN, xStart + width/2, pY + 15);
-                ctx.font = '16px sans-serif';
-                ctx.fillText(regionName, xStart + width/2, botY + 20);
+                ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 18px sans-serif'; ctx.fillText("...", xStart + width/2, pY);
+                ctx.font = '14px sans-serif'; ctx.fillText(labelN, xStart + width/2, pY + 15);
+                ctx.font = '16px sans-serif'; ctx.fillText(regionName, xStart + width/2, botY + 20);
             };
-            
             drawParticles(ox, wC, '#0ea5e9', "nₚ", "Cathode");
             drawParticles(ox + wC + wE, wA, '#fcd34d', "nₙ", "Anode");
 
-            // --- Draw r-coordinate on the first Cathode particle in P2D ---
-            const px0 = ox + pSpacing; 
-            const angle_r = -Math.PI / 4;
-            const ex_r = px0 + pRad * Math.cos(angle_r);
-            const ey_r = pY + pRad * Math.sin(angle_r);
-            
-            ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 1.5;
-            ctx.beginPath(); ctx.moveTo(px0, pY); ctx.lineTo(ex_r, ey_r); ctx.stroke();
-            
-            // Arrow head
-            ctx.beginPath(); ctx.moveTo(ex_r, ey_r);
-            ctx.lineTo(ex_r - 6 * Math.cos(angle_r - 0.4), ey_r - 6 * Math.sin(angle_r - 0.4));
-            ctx.lineTo(ex_r - 6 * Math.cos(angle_r + 0.4), ey_r - 6 * Math.sin(angle_r + 0.4));
-            ctx.fillStyle = '#f8fafc'; ctx.fill();
-            
-            // Center dot
+            const px0 = ox + pSpacing, angle_r = -Math.PI / 4, ex_r = px0 + pRad * Math.cos(angle_r), ey_r = pY + pRad * Math.sin(angle_r);
+            ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(px0, pY); ctx.lineTo(ex_r, ey_r); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(ex_r, ey_r); ctx.lineTo(ex_r - 6 * Math.cos(angle_r - 0.4), ey_r - 6 * Math.sin(angle_r - 0.4));
+            ctx.lineTo(ex_r - 6 * Math.cos(angle_r + 0.4), ey_r - 6 * Math.sin(angle_r + 0.4)); ctx.fillStyle = '#f8fafc'; ctx.fill();
             ctx.beginPath(); ctx.arc(px0, pY, 2, 0, Math.PI*2); ctx.fill();
-            
-            // Label 'r'
-            ctx.font = 'italic 12px sans-serif'; ctx.textAlign = 'left';
-            ctx.fillText('r', ex_r + 4, ey_r - 2);
-            // --------------------------------------------------------------
+            ctx.font = 'italic 12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('r', ex_r + 4, ey_r - 2);
 
-            ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif';
-            ctx.fillText("Separator", ox + wC + wE/2, cy + 5);
+            ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.fillText("Separator", ox + wC + wE/2, cy + 5);
 
-            // Keep the P2D view fixed. Equation selection highlights the physical domain only.
             if (activeAnimState.p2dTarget) {
                 const target = activeAnimState.p2dTarget;
                 const isSolid = target === 'solid_diff' || target === 'solid_charge';
                 const isKinetics = target === 'kinetics';
                 const color = target.includes('charge') ? '#facc15' : '#22c55e';
                 const label = isSolid ? 'Solid phase in both porous electrodes' : (isKinetics ? 'Electrode-electrolyte interfaces' : 'Electrolyte-filled porous cell');
-                const domains = isSolid || isKinetics
-                    ? [[ox, wC], [ox + wC + wE, wA]]
-                    : [[ox, cw]];
+                const domains = isSolid || isKinetics ? [[ox, wC], [ox + wC + wE, wA]] : [[ox, cw]];
 
-                ctx.save();
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 3;
+                ctx.save(); ctx.strokeStyle = color; ctx.lineWidth = 3;
                 domains.forEach(([hx, hw]) => {
-                    ctx.fillStyle = color + '26';
-                    ctx.fillRect(hx, topY, hw, ch);
+                    ctx.fillStyle = color + '26'; ctx.fillRect(hx, topY, hw, ch);
                     ctx.strokeRect(hx + 1.5, topY + 1.5, hw - 3, ch - 3);
                 });
-                ctx.fillStyle = color;
-                ctx.font = 'bold 14px sans-serif';
-                ctx.textAlign = 'center';
-                ctx.fillText(label, ox + cw / 2, topY - 42);
-                ctx.restore();
+                ctx.fillStyle = color; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, ox + cw / 2, topY - 42); ctx.restore();
                 return;
             }
 
-            // Handle Camera Targets & Animations
             if (activeAnimState.p2dTarget) {
-                let badgeText = "", bx = width/2, by = cy - ch/2 - 50;
-                ctx.fillStyle = '#22c55e';
-                
+                let badgeText = "", bx = width/2, by = cy - ch/2 - 50; ctx.fillStyle = '#22c55e';
                 if (activeAnimState.p2dTarget === 'solid_diff') {
-                    cam.targetX = ox + wC/2; cam.targetScale = 3.5;
-                    badgeText = "종 보존 (Species: Li)";
-                    const targetP = ox + pSpacing;
-                    const r = (Math.sin(time*0.003)+1)/2 * pRad;
+                    cam.targetX = ox + wC/2; cam.targetScale = 3.5; badgeText = "종 보존 (Species: Li)";
+                    const targetP = ox + pSpacing, r = (Math.sin(time*0.003)+1)/2 * pRad;
                     ctx.beginPath(); ctx.arc(targetP, pY, r, 0, Math.PI*2); ctx.strokeStyle='#22c55e'; ctx.lineWidth=1.5; ctx.stroke();
                     ctx.fillStyle='#22c55e'; ctx.font='bold 6px sans-serif'; ctx.fillText('Li', targetP, pY+r+6);
                 } 
                 else if (activeAnimState.p2dTarget === 'liquid_mass') {
-                    cam.targetX = ox + wC + wE/2; cam.targetScale = 3.0;
-                    badgeText = "종 보존 (Species: Li⁺)";
+                    cam.targetX = ox + wC + wE/2; cam.targetScale = 3.0; badgeText = "종 보존 (Species: Li⁺)";
                     const px = ox + wC + (Math.sin(time*0.002)+1)/2 * wE;
                     ctx.beginPath(); ctx.arc(px, cy+10, 4, 0, Math.PI*2); ctx.fillStyle='#22c55e'; ctx.fill();
                     ctx.fillStyle='#22c55e'; ctx.font='bold 8px sans-serif'; ctx.fillText('Li⁺', px, cy+22);
                 }
                 else if (activeAnimState.p2dTarget === 'solid_charge') {
-                    cam.targetX = ox + wC/2; cam.targetScale = 3.0;
-                    badgeText = "전하 보존 (Charge: e⁻)";
+                    cam.targetX = ox + wC/2; cam.targetScale = 3.0; badgeText = "전하 보존 (Charge: e⁻)";
                     const px = ox + pSpacing + (Math.sin(time*0.005)+1)/2 * (wC - pSpacing*2);
                     ctx.beginPath(); ctx.arc(px, cy-pRad-5, 3, 0, Math.PI*2); ctx.fillStyle='#facc15'; ctx.fill();
                     ctx.fillStyle='#facc15'; ctx.font='bold 8px sans-serif'; ctx.fillText('e⁻', px, cy-pRad-12);
                     ctx.strokeStyle='#facc15'; ctx.beginPath(); ctx.moveTo(px-10, cy-pRad-5); ctx.lineTo(px+10, cy-pRad-5); ctx.stroke();
                 }
                 else if (activeAnimState.p2dTarget === 'liquid_charge') {
-                    cam.targetX = ox + wC + wE/2; cam.targetScale = 3.0;
-                    badgeText = "전하 보존 (Charge: Li⁺, PF₆⁻)";
-                    const p1 = ox + wC + (Math.sin(time*0.002)+1)/2 * wE;
-                    const p2 = ox + wC + wE - (Math.sin(time*0.002)+1)/2 * wE;
+                    cam.targetX = ox + wC + wE/2; cam.targetScale = 3.0; badgeText = "전하 보존 (Charge: Li⁺, PF₆⁻)";
+                    const p1 = ox + wC + (Math.sin(time*0.002)+1)/2 * wE, p2 = ox + wC + wE - (Math.sin(time*0.002)+1)/2 * wE;
                     ctx.beginPath(); ctx.arc(p1, cy+15, 3, 0, Math.PI*2); ctx.fillStyle='#22c55e'; ctx.fill(); ctx.fillText('Li⁺', p1, cy+25);
                     ctx.beginPath(); ctx.arc(p2, cy-15, 3, 0, Math.PI*2); ctx.fillStyle='#ef4444'; ctx.fill(); ctx.fillText('PF₆⁻', p2, cy-25);
                 }
                 else if (activeAnimState.p2dTarget === 'kinetics') {
-                    cam.targetX = ox + wC - pSpacing; cam.targetScale = 4.0;
-                    badgeText = "반응 동역학 (Li⁺ + e⁻ ↔ Li)";
-                    const targetP = ox + wC - pSpacing;
-                    const rOffset = Math.sin(time*0.005)*5;
+                    cam.targetX = ox + wC - pSpacing; cam.targetScale = 4.0; badgeText = "반응 동역학 (Li⁺ + e⁻ ↔ Li)";
+                    const targetP = ox + wC - pSpacing, rOffset = Math.sin(time*0.005)*5;
                     ctx.fillStyle='#22c55e'; ctx.fillText('Li⁺', targetP+pRad+10+rOffset, cy);
                     ctx.fillStyle='#facc15'; ctx.fillText('e⁻', targetP+pRad-5, cy-pRad-5-rOffset);
                 }
-                
-                // Draw Mode Badge
                 if (badgeText) {
-                    ctx.fillStyle = 'rgba(15,23,42,0.8)';
-                    const tw = ctx.measureText(badgeText).width;
+                    ctx.fillStyle = 'rgba(15,23,42,0.8)'; const tw = ctx.measureText(badgeText).width;
                     ctx.fillRect(cam.targetX - tw/2 - 10, cy - ch/2 - 25, tw + 20, 20);
                     ctx.strokeStyle = activeAnimState.p2dTarget.includes('charge') ? '#facc15' : '#22c55e';
                     ctx.lineWidth = 1; ctx.strokeRect(cam.targetX - tw/2 - 10, cy - ch/2 - 25, tw + 20, 20);
@@ -1268,14 +1130,8 @@
 
         function drawBatteryDetailed(ch, time) {
             const ox = width * 0.1; const cw = width * 0.8; const cy = height / 2;
-            
-            // Updated default layout emphasizing thicker electrodes and a thinner separator
-            let wC = cw * 0.4; let wE = cw * 0.2; let wA = cw * 0.4;
-
-            // SPM Overlay adjusts the underlying physical domains even further
-            if (activeAnimState.spm) {
-                wC = cw * 0.45; wE = cw * 0.1; wA = cw * 0.45;
-            }
+            let wC = cw * 0.4, wE = cw * 0.2, wA = cw * 0.4;
+            if (activeAnimState.spm) { wC = cw * 0.45; wE = cw * 0.1; wA = cw * 0.45; }
 
             if (activeAnimState.heat) {
                 const glow = ctx.createRadialGradient(getCanvasX(particle.x), cy, 0, getCanvasX(particle.x), cy, width/2);
@@ -1286,7 +1142,6 @@
             const isTransparent = activeAnimState.mode === 'p2d' || activeAnimState.spm;
             ctx.globalAlpha = isTransparent ? 0.08 : 1.0;
 
-            // Draw Base Battery
             ctx.fillStyle = '#64748b'; ctx.fillRect(ox - 12, cy - ch/2, 12, ch); 
             ctx.fillStyle = '#b45309'; ctx.fillRect(ox + cw, cy - ch/2, 12, ch); 
             ctx.fillStyle = '#0f172a'; ctx.fillRect(ox, cy - ch/2, cw, ch); 
@@ -1295,83 +1150,55 @@
             ctx.beginPath(); ctx.setLineDash([4,6]); ctx.moveTo(ox+wC+wE/2, cy-ch/2); ctx.lineTo(ox+wC+wE/2, cy+ch/2);
             ctx.strokeStyle = '#475569'; ctx.lineWidth = 4; ctx.stroke(); ctx.setLineDash([]);
 
-            // RNG를 고정하여 파티클 위치가 매 프레임 흔들리지 않도록 설정
             const rnd = LCG(12345);
             ctx.fillStyle = 'rgba(2, 132, 199, 0.6)'; ctx.strokeStyle = 'rgba(56, 189, 248, 0.4)'; ctx.lineWidth = 1.5;
             for(let i=0; i<80; i++) {
-                const px = ox + 15 + rnd()*(wC-30); const py = cy - ch/2 + 15 + rnd()*(ch-30);
+                const px = ox + 15 + rnd()*(wC-30), py = cy - ch/2 + 15 + rnd()*(ch-30);
                 ctx.beginPath(); ctx.arc(px, py, 8 + rnd()*12, 0, Math.PI*2); ctx.fill(); ctx.stroke();
             }
             
-            // 음극 활물질 (Anode) 및 동그란 SEI 렌더링
             const seiThickness = (appMode === 'sandbox' && physics.sei > 10) ? (physics.sei - 10) * 0.4 : 0;
             const seiAlpha = (appMode === 'sandbox') ? Math.min(0.8, 0.2 + (sbState.cycle/3000)) : 0;
 
             for(let i=0; i<80; i++) {
                 const r1 = rnd(), r2 = rnd(), r3 = rnd();
-                const px = ox + wC + wE + 15 + r1*(wA-30); 
-                const py = cy - ch/2 + 15 + r2*(ch-30);
-                const r = 6 + r3*8;
-
-                // SEI Layer (입자 주변을 동그랗게 감싸며 두꺼워짐)
+                const px = ox + wC + wE + 15 + r1*(wA-30), py = cy - ch/2 + 15 + r2*(ch-30), r = 6 + r3*8;
                 if (seiThickness > 0) {
                     ctx.fillStyle = `rgba(250, 204, 21, ${seiAlpha})`;
                     ctx.beginPath(); ctx.arc(px, py, r + seiThickness, 0, Math.PI*2); ctx.fill();
                 }
-
-                // Anode Particle
                 ctx.fillStyle = 'rgba(217, 119, 6, 0.6)'; ctx.strokeStyle = 'rgba(252, 211, 77, 0.4)';
                 ctx.beginPath(); ctx.arc(px, py, r, 0, Math.PI*2); ctx.fill(); ctx.stroke();
             }
 
             if (appMode === 'tutorial' && currentStep === 0) {
-                const hx = ox + (Math.sin(time * 0.005) + 1) / 2 * cw;
-                ctx.fillStyle = 'rgba(255,255,255,0.08)';
+                const hx = ox + (Math.sin(time * 0.005) + 1) / 2 * cw; ctx.fillStyle = 'rgba(255,255,255,0.08)';
                 if (hx < ox + wC) ctx.fillRect(ox - 12, cy - ch/2, wC + 12, ch);
                 else if (hx < ox + wC + wE) ctx.fillRect(ox + wC, cy - ch/2, wE, ch);
                 else ctx.fillRect(ox + wC + wE, cy - ch/2, wA + 12, ch);
-                drawExternalWire(ch, true, electrons, introMode);
-                drawLithiumIons(ch, introMode, time);
+                drawExternalWire(ch, true, electrons, introMode); drawLithiumIons(ch, introMode, time);
             }
             
-            // 동적 Cathode / Anode 텍스트 렌더링
             if (!isTransparent && cam.scale < 3) {
                 ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.font = 'bold 20px sans-serif'; ctx.textAlign = 'center';
-                
                 let currentMode = 'idle';
-                if (appMode === 'tutorial' && currentStep === 0) currentMode = introMode;
-                else if (appMode === 'sandbox') currentMode = sbState.mode;
-
-                let leftLabel = "Cathode (양극)";
-                let rightLabel = "Anode (음극)";
-
-                if (currentMode === 'charge') {
-                    leftLabel = "양극 (+, 산화극/Anode)";
-                    rightLabel = "음극 (-, 환원극/Cathode)";
-                } else if (currentMode === 'discharge') {
-                    leftLabel = "양극 (+, 환원극/Cathode)";
-                    rightLabel = "음극 (-, 산화극/Anode)";
-                }
-
+                if (appMode === 'tutorial' && currentStep === 0) currentMode = introMode; else if (appMode === 'sandbox') currentMode = sbState.mode;
+                let leftLabel = "Cathode (양극)", rightLabel = "Anode (음극)";
+                if (currentMode === 'charge') { leftLabel = "양극 (+, 산화극/Anode)"; rightLabel = "음극 (-, 환원극/Cathode)"; } 
+                else if (currentMode === 'discharge') { leftLabel = "양극 (+, 환원극/Cathode)"; rightLabel = "음극 (-, 산화극/Anode)"; }
                 ctx.fillText(leftLabel, ox + wC/2, cy + ch/2 + 30);
                 ctx.fillText("Electrolyte / Separator", ox + wC + wE/2, cy + ch/2 + 30);
                 ctx.fillText(rightLabel, ox + wC + wE + wA/2, cy + ch/2 + 30);
             }
-            
             ctx.globalAlpha = 1.0;
 
-            // Draw Specific Model Overlays
             if (activeAnimState.spm) {
-                const topY = cy - ch/2;
-                const botY = cy + ch/2;
-
-                // Outline Boxes
+                const topY = cy - ch/2, botY = cy + ch/2;
                 ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 1.5;
                 ctx.strokeRect(ox, topY, cw, ch);
                 ctx.beginPath(); ctx.moveTo(ox + wC, topY); ctx.lineTo(ox + wC, botY); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(ox + wC + wE, topY); ctx.lineTo(ox + wC + wE, botY); ctx.stroke();
 
-                // Dimensions
                 const dimY = topY - 10;
                 const drawDim = (xStart, width, label) => {
                     const cx_dim = xStart + width/2;
@@ -1381,122 +1208,65 @@
                     ctx.beginPath(); ctx.moveTo(xStart + width - 10, dimY - 3); ctx.lineTo(xStart + width - 5, dimY); ctx.lineTo(xStart + width - 10, dimY + 3); ctx.stroke();
                     ctx.fillStyle = '#f8fafc'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; ctx.fillText(label, cx_dim, dimY + 4);
                 };
-                drawDim(ox, wC, "Lₚ (Cathode)");
-                drawDim(ox + wC, wE, "Lₛₑₚ");
-                drawDim(ox + wC + wE, wA, "Lₙ (Anode)");
+                drawDim(ox, wC, "Lₚ (Cathode)"); drawDim(ox + wC, wE, "Lₛₑₚ"); drawDim(ox + wC + wE, wA, "Lₙ (Anode)");
 
-                // Giant Particles
                 const pRad = Math.min(wC * 0.4, ch * 0.4);
+                const cx_p = ox + wC/2; ctx.fillStyle = '#0284c7';
+                ctx.beginPath(); ctx.arc(cx_p, cy, pRad, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle='#38bdf8'; ctx.lineWidth=3; ctx.stroke();
 
-                // --- Cathode Giant Particle ---
-                const cx_p = ox + wC/2;
-                ctx.fillStyle = '#0284c7';
-                ctx.beginPath(); ctx.arc(cx_p, cy, pRad, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle='#38bdf8'; ctx.lineWidth=3; ctx.stroke();
-
-                // Draw r-coordinate for SPM Cathode
-                const angle_spm = -Math.PI / 6;
-                const ex_spm = cx_p + pRad * Math.cos(angle_spm);
-                const ey_spm = cy + pRad * Math.sin(angle_spm);
-                
-                ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.moveTo(cx_p, cy); ctx.lineTo(ex_spm, ey_spm); ctx.stroke();
-                
-                // Arrow head
+                const angle_spm = -Math.PI / 6, ex_spm = cx_p + pRad * Math.cos(angle_spm), ey_spm = cy + pRad * Math.sin(angle_spm);
+                ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(cx_p, cy); ctx.lineTo(ex_spm, ey_spm); ctx.stroke();
                 ctx.beginPath(); ctx.moveTo(ex_spm, ey_spm);
                 ctx.lineTo(ex_spm - 10 * Math.cos(angle_spm - 0.3), ey_spm - 10 * Math.sin(angle_spm - 0.3));
-                ctx.lineTo(ex_spm - 10 * Math.cos(angle_spm + 0.3), ey_spm - 10 * Math.sin(angle_spm + 0.3));
-                ctx.fillStyle = '#f8fafc'; ctx.fill();
-                
+                ctx.lineTo(ex_spm - 10 * Math.cos(angle_spm + 0.3), ey_spm - 10 * Math.sin(angle_spm + 0.3)); ctx.fillStyle = '#f8fafc'; ctx.fill();
                 ctx.beginPath(); ctx.arc(cx_p, cy, 3, 0, Math.PI*2); ctx.fill();
-                
-                ctx.fillStyle = '#f8fafc'; ctx.font = 'italic 16px sans-serif'; ctx.textAlign = 'left';
-                ctx.fillText('r', ex_spm + 8, ey_spm - 2);
-                ctx.font = '13px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText('r=0', cx_p, cy + 18);
-                ctx.textAlign = 'left';
-                ctx.fillText('r=R_p', ex_spm + 6, ey_spm + 16);
-
+                ctx.fillStyle = '#f8fafc'; ctx.font = 'italic 16px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('r', ex_spm + 8, ey_spm - 2);
+                ctx.font = '13px sans-serif'; ctx.textAlign = 'center'; ctx.fillText('r=0', cx_p, cy + 18);
+                ctx.textAlign = 'left'; ctx.fillText('r=R_p', ex_spm + 6, ey_spm + 16);
                 ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText("SPM 단일 입자", cx_p, cy - pRad - 15);
-                ctx.font = '14px sans-serif';
-                ctx.fillText("nₚ", cx_p, cy - pRad/2);
+                ctx.fillText("SPM 단일 입자", cx_p, cy - pRad - 15); ctx.font = '14px sans-serif'; ctx.fillText("nₚ", cx_p, cy - pRad/2);
 
-                // --- Anode Giant Particle ---
-                const cx_n = ox + wC + wE + wA/2;
-                ctx.fillStyle = '#d97706';
-                ctx.beginPath(); ctx.arc(cx_n, cy, pRad, 0, Math.PI*2); ctx.fill();
-                ctx.strokeStyle='#fcd34d'; ctx.lineWidth=3; ctx.stroke();
-
+                const cx_n = ox + wC + wE + wA/2; ctx.fillStyle = '#d97706';
+                ctx.beginPath(); ctx.arc(cx_n, cy, pRad, 0, Math.PI*2); ctx.fill(); ctx.strokeStyle='#fcd34d'; ctx.lineWidth=3; ctx.stroke();
                 ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center';
-                ctx.fillText("SPM 단일 입자", cx_n, cy - pRad - 15);
-                ctx.font = '14px sans-serif'; ctx.fillStyle = '#f8fafc';
-                ctx.fillText("nₙ", cx_n, cy);
+                ctx.fillText("SPM 단일 입자", cx_n, cy - pRad - 15); ctx.font = '14px sans-serif'; ctx.fillStyle = '#f8fafc'; ctx.fillText("nₙ", cx_n, cy);
 
-                // Separator Text
-                ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif';
-                ctx.fillText("Separator", ox + wC + wE/2, cy + 5);
-
-                // Assumption Label
-                ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif';
-                ctx.fillText("(전해질 농도 균일 가정)", ox + wC + wE/2, topY - 30);
+                ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.fillText("Separator", ox + wC + wE/2, cy + 5);
+                ctx.fillStyle = '#cbd5e1'; ctx.font = '12px sans-serif'; ctx.fillText("(전해질 농도 균일 가정)", ox + wC + wE/2, topY - 30);
             }
-
-            if (activeAnimState.mode === 'p2d') {
-                drawP2DOverlay(ox, cy, cw, ch, wC, wE, wA, time);
-            }
+            if (activeAnimState.mode === 'p2d') drawP2DOverlay(ox, cy, cw, ch, wC, wE, wA, time);
         }
 
         function drawSOCGraph(t) {
             ctx.save();
-            
-            // 카메라 위치/스케일 강제 초기화 후 중앙 정렬
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            const VW = 1000;
-            const VH = 650;
-            const zoom = Math.min(width / VW, height / VH) * 0.8;
-            ctx.translate(width / 2, height / 2);
-            ctx.scale(zoom, zoom);
-            ctx.translate(-VW / 2, -VH / 2);
+            const VW = 1000, VH = 650, zoom = Math.min(width / VW, height / VH) * 0.8;
+            ctx.translate(width / 2, height / 2); ctx.scale(zoom, zoom); ctx.translate(-VW / 2, -VH / 2);
 
-            // 크기와 배치 키우기
-            const cx = VW / 2, w = 860, h = 420; 
-            const left = cx - w / 2, top = VH / 2 - h / 2 - 15, bottom = top + h;
+            const cx = VW / 2, w = 860, h = 420, left = cx - w / 2, top = VH / 2 - h / 2 - 15, bottom = top + h;
             const yMin = 0, yMax = 4.35;
-            const toX = theta => left + theta * w;
-            const toY = v => bottom - (v - yMin) / (yMax - yMin) * h;
+            const toX = theta => left + theta * w, toY = v => bottom - (v - yMin) / (yMax - yMin) * h;
             
-            // 전압 곡선 수식
             const up = theta => 3.62 + 0.42 * theta + 0.10 * Math.tanh((theta - 0.58) * 6);
             const un = theta => 0.39 - 0.27 * theta + 0.025 * Math.sin(theta * Math.PI * 2);
             const uCell = theta => up(theta) - un(theta);
 
-            // 배경 및 테두리 (박스 크기 확대)
             ctx.fillStyle = '#0f172a'; ctx.fillRect(left - 15, top - 45, w + 30, h + 130);
             ctx.strokeStyle = '#334155'; ctx.lineWidth = 2.5; ctx.strokeRect(left, top, w, h);
             
-            // Y축 전압 눈금
             ctx.font = '14px sans-serif'; ctx.textAlign = 'right';
             for(let v = 0; v <= 4; v++) { 
-                const y = toY(v); 
-                ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.5; 
+                const y = toY(v); ctx.strokeStyle = '#1e293b'; ctx.lineWidth = 1.5; 
                 ctx.beginPath(); ctx.moveTo(left, y); ctx.lineTo(left + w, y); ctx.stroke(); 
                 ctx.fillStyle = '#94a3b8'; ctx.fillText(`${v.toFixed(1)} V`, left - 10, y + 5); 
             }
-            
-            // X축 SOC 눈금
             for(let i = 0; i <= 4; i++) { 
                 const theta = i / 4, x_pos = toX(theta); 
                 ctx.strokeStyle = '#1e293b'; ctx.beginPath(); ctx.moveTo(x_pos, top); ctx.lineTo(x_pos, bottom); ctx.stroke(); 
                 ctx.textAlign = 'center'; ctx.fillStyle = '#cbd5e1'; ctx.fillText(`${Math.round(theta * 100)}%`, x_pos, bottom + 24); 
             }
 
-            // 전압 곡선 그리기 (선 굵기 확대)
-            const curves = [
-                {fn: up, color: '#f472b6', name: '양극 Uₚ'},
-                {fn: un, color: '#a3e635', name: '음극 Uₙ'},
-                {fn: uCell, color: '#38bdf8', name: '셀 Ucell'}
-            ];
+            const curves = [{fn: up, color: '#f472b6', name: '양극 Uₚ'}, {fn: un, color: '#a3e635', name: '음극 Uₙ'}, {fn: uCell, color: '#38bdf8', name: '셀 Ucell'}];
             curves.forEach(({fn, color}) => { 
                 ctx.beginPath(); ctx.strokeStyle = color; ctx.lineWidth = 4; 
                 for(let i = 0; i <= 200; i++){ 
@@ -1506,19 +1276,14 @@
                 ctx.stroke(); 
             });
             
-            // 범례 표시
             ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; 
             curves.forEach(({color, name}, i)=>{ 
                 ctx.fillStyle = color; ctx.fillRect(left + 15 + i * 140, top - 26, 12, 12); 
                 ctx.fillStyle = '#e2e8f0'; ctx.fillText(name, left + 35 + i * 140, top - 15); 
             });
 
-            // 실시간 이동 애니메이션 (점과 수직선)
-            const theta = (Math.sin(t * 0.0007) + 1) / 2;
-            const charging = Math.cos(t * 0.0007) >= 0;
-            const xp = 0.08 + 0.84 * theta;
-            const xn = 0.90 - 0.80 * theta;
-            const currentX = toX(theta);
+            const theta = (Math.sin(t * 0.0007) + 1) / 2, charging = Math.cos(t * 0.0007) >= 0;
+            const xp = 0.08 + 0.84 * theta, xn = 0.90 - 0.80 * theta, currentX = toX(theta);
             
             ctx.setLineDash([6, 5]); ctx.strokeStyle = '#facc15'; ctx.lineWidth = 2.5; 
             ctx.beginPath(); ctx.moveTo(currentX, top); ctx.lineTo(currentX, bottom); ctx.stroke(); ctx.setLineDash([]);
@@ -1527,7 +1292,6 @@
                 ctx.beginPath(); ctx.arc(currentX, toY(v), 7, 0, Math.PI * 2); ctx.fillStyle = c; ctx.fill();
             });
             
-            // 상단 및 하단 상태 텍스트
             ctx.fillStyle = '#f8fafc'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left';
             ctx.fillStyle = charging ? '#60a5fa' : '#f59e0b'; 
             ctx.fillText(charging ? '충전 중: 점과 선이 오른쪽(충전상태 증가)으로 이동' : '방전 중: 점과 선이 왼쪽(충전상태 감소)으로 이동', left + 15, top - 52);
@@ -1538,36 +1302,25 @@
             ctx.font = '14px sans-serif'; ctx.fillStyle = '#94a3b8'; ctx.textAlign = 'center';
             ctx.fillText(`충전상태 (θ)     xₚ=${xp.toFixed(2)}     xₙ=${xn.toFixed(2)}`, cx, bottom + 80);
             
-            // Y축 제목 회전
             ctx.save(); ctx.translate(left - 50, top + h / 2); ctx.rotate(-Math.PI / 2); ctx.fillText('평형 전위 / OCV', 0, 0); ctx.restore();
-
-            ctx.restore(); // 스케일 리셋
+            ctx.restore();
         }
 
         function drawECMModel() {
             ctx.save();
-            
-            // 카메라 위치/스케일 강제 초기화 후 중앙 정렬
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            const VW = 1000;
-            const VH = 650;
-            const zoom = Math.min(width / VW, height / VH) * 0.8;
-            ctx.translate(width / 2, height / 2);
-            ctx.scale(zoom, zoom);
-            ctx.translate(-VW / 2, -VH * 7 / 12);
+            const VW = 1000, VH = 650, zoom = Math.min(width / VW, height / VH) * 0.8;
+            ctx.translate(width / 2, height / 2); ctx.scale(zoom, zoom); ctx.translate(-VW / 2, -VH * 7 / 12);
 
-            // 크기와 배치 키우기
             const cx = VW / 2, w = 920, x = cx - w / 2, y = VH * 0.15;
-            
             const panel = (py, ph, title) => { 
-                ctx.fillStyle = '#0f172a'; ctx.fillRect(x, py, w, ph); 
-                ctx.strokeStyle = '#334155'; ctx.lineWidth = 2.5; ctx.strokeRect(x, py, w, ph); 
+                drawRoundRect(ctx, x, py, w, ph, 0); ctx.fillStyle = '#0f172a'; ctx.fill(); 
+                ctx.strokeStyle = '#334155'; ctx.lineWidth = 2.5; ctx.stroke(); 
                 ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; 
                 ctx.fillText(title, x + 24, py + 30); 
             };
             
             const wireY = y + 140, branchL = x + w * 0.47, branchR = x + w * 0.81;
-            
             const zigzag = (x1, y_pos, x2, amplitude, color) => { 
                 const n = 10, dx = (x2 - x1) / n; 
                 ctx.strokeStyle = color; ctx.lineWidth = 3.5; 
@@ -1578,101 +1331,101 @@
             
             panel(y, 290, 'Step 1  |  Randles Equivalent Circuit Model');
             
-            // 배터리 터미널 전선
             ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3.5; 
             ctx.beginPath(); ctx.moveTo(x + 30, wireY); ctx.lineTo(x + 100, wireY); ctx.stroke();
             
-            // OCV (이상적 전압원)
             ctx.beginPath(); ctx.arc(x + 140, wireY, 35, 0, Math.PI * 2); 
             ctx.strokeStyle = '#60a5fa'; ctx.stroke(); 
             ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 18px sans-serif'; ctx.textAlign = 'center'; 
             ctx.fillText('+', x + 140, wireY - 10); ctx.fillText('−', x + 140, wireY + 20); 
             ctx.fillStyle = '#93c5fd'; ctx.font = '15px sans-serif'; ctx.fillText('V_ocv', x + 140, wireY + 65);
             
-            // Rs (오믹 저항)
             ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(x + 175, wireY); ctx.lineTo(x + 215, wireY); ctx.stroke(); 
             zigzag(x + 215, wireY, x + 340, 12, '#facc15'); 
             ctx.fillStyle = '#facc15'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('Rₛ', x + 277, wireY - 28); 
-            ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.fillText('전하 이동 손실', x + 277, wireY + 40);
+            ctx.fillStyle = '#94a3b8'; ctx.font = '14px sans-serif'; ctx.fillText('즉각적 오믹 하락', x + 277, wireY + 40);
             
-            // 병렬 회로 분기선
+            ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); ctx.moveTo(x + 340, wireY); ctx.lineTo(branchL, wireY); ctx.stroke();
+
+            // 도선 연결 (끊김 수정)
             ctx.strokeStyle = '#94a3b8'; ctx.beginPath(); 
-            ctx.moveTo(x + 340, wireY); ctx.lineTo(branchL, wireY); 
-            ctx.moveTo(branchR, wireY); ctx.lineTo(x + w - 30, wireY); 
+            ctx.moveTo(branchL, wireY); ctx.lineTo(branchL, wireY - 70); ctx.lineTo(branchL + 140, wireY - 70);
+            ctx.moveTo(branchL + 165, wireY - 70); ctx.lineTo(branchR, wireY - 70); ctx.lineTo(branchR, wireY);
             
-            ctx.moveTo(branchL, wireY); ctx.lineTo(branchL, wireY - 70); ctx.lineTo(branchR, wireY - 70); ctx.lineTo(branchR, wireY); 
-            ctx.moveTo(branchL, wireY); ctx.lineTo(branchL, wireY + 70); ctx.lineTo(branchR, wireY + 70); ctx.lineTo(branchR, wireY); 
+            ctx.moveTo(branchL, wireY); ctx.lineTo(branchL, wireY + 70); ctx.lineTo(branchL + 30, wireY + 70);
+            ctx.moveTo(branchL + 115, wireY + 70); ctx.lineTo(branchL + 135, wireY + 70);
+            ctx.moveTo(branchL + 273, wireY + 70); ctx.lineTo(branchR, wireY + 70); ctx.lineTo(branchR, wireY);
             ctx.stroke();
+
+            ctx.beginPath(); ctx.moveTo(branchR, wireY); ctx.lineTo(x + w - 30, wireY); ctx.stroke();
             
-            // Cdl (이중층 커패시터)
+            // Cdl
             ctx.strokeStyle = '#a3e635'; ctx.lineWidth = 4.5; ctx.beginPath(); 
             ctx.moveTo(branchL + 140, wireY - 95); ctx.lineTo(branchL + 140, wireY - 45); 
             ctx.moveTo(branchL + 165, wireY - 95); ctx.lineTo(branchL + 165, wireY - 45); ctx.stroke(); 
             ctx.fillStyle = '#a3e635'; ctx.font = 'bold 17px sans-serif'; ctx.fillText('Cₔₗ', branchL + 152, wireY - 110);
             
-            // Rct (전하 전달 저항)
+            // Rct
             zigzag(branchL + 30, wireY + 70, branchL + 115, 11, '#f472b6'); 
             ctx.fillStyle = '#f472b6'; ctx.fillText('R꜀ₜ', branchL + 72, wireY + 105);
             
-            // Zw (Warburg 임피던스)
-            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5; ctx.beginPath(); 
-            ctx.roundRect(branchL + 135, wireY + 50, branchR - branchL - 175, 40, 5); ctx.stroke(); 
-            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('Zᴡ', (branchL + branchR) / 2 + 20, wireY + 76);
+            // Zw
+            ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 2.5; 
+            drawRoundRect(ctx, branchL + 135, wireY + 50, 138, 40, 5); ctx.stroke(); 
+            ctx.fillStyle = '#38bdf8'; ctx.font = 'bold 16px sans-serif'; ctx.fillText('Zᴡ', branchL + 204, wireY + 76);
             
             ctx.fillStyle = '#cbd5e1'; ctx.font = '16px sans-serif'; ctx.textAlign = 'center'; 
-            ctx.fillText('Rₛ + [Cₔₗ ∥ (R꜀ₜ + Zᴡ)]  |  빠른 전하 이동 · 계면 축적/반응 · 느린 확산', cx, y + 265);
+            ctx.fillText('Rₛ + [Cₔₗ ∥ (R꜀ₜ + Zᴡ)]  |  전압 하락과 지연을 일으키는 복잡한 화학 반응을 전기 기호로 쉽게 표현', cx, y + 265);
             
-            // 하단 3개 설명 카드
             const cardsY = y + 315, cardW = (w - 40) / 3;
             const card = (i, title, body, color) => { 
                 const px = x + i * (cardW + 20); 
                 ctx.fillStyle = '#111c30'; ctx.strokeStyle = color; ctx.lineWidth = 2; 
-                ctx.beginPath(); ctx.roundRect(px, cardsY, cardW, 145, 10); ctx.fill(); ctx.stroke(); 
-                
+                drawRoundRect(ctx, px, cardsY, cardW, 160, 10); ctx.fill(); ctx.stroke(); 
                 ctx.fillStyle = color; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'left'; 
                 ctx.fillText(title, px + 18, cardsY + 32); 
-                
                 ctx.fillStyle = '#cbd5e1'; ctx.font = '14px sans-serif'; 
-                body.forEach((line, j) => ctx.fillText(line, px + 18, cardsY + 68 + j * 24)); 
+                body.forEach((line, j) => ctx.fillText(line, px + 18, cardsY + 65 + j * 24)); 
             };
             
-            card(0, 'Rₛ · 이동 경로의 저항', ['집전체·도전재·전해질·접촉', '전하 이동의 즉각적 손실'], '#facc15');
-            card(1, 'Cₔₗ · 계면 전하 축적', ['전극/전해질 경계에 전하 분리', '반응 전 전하를 잠시 저장'], '#a3e635');
-            card(2, 'R꜀ₜ + Zᴡ · 반응과 확산', ['R꜀ₜ: 계면 전기화학 반응 장벽', 'Zᴡ: 농도 구배 해소용 Li⁺ 확산'], '#38bdf8');
+            card(0, 'Rₛ (오믹 저항)', 
+                ['전류가 흐르는 순간 즉각적으로', 
+                 '발생하는 전압 강하입니다.', 
+                 '전해질, 집전체, 도선 등에서', 
+                 '물리적으로 방해받는 저항입니다.'], '#facc15'); 
+            card(1, 'Cₔₗ (이중층 커패시터)', 
+                ['전극과 전해질이 맞닿는 계면에서', 
+                 '전하가 모여 에너지가 축적됩니다.', 
+                 '이로 인해 배터리 전압이 즉시', 
+                 '변하지 않고 서서히 완만해집니다.'], '#a3e635'); 
+            card(2, 'R꜀ₜ 와 Zᴡ (반응 및 확산)', 
+                ['R꜀ₜ는 화학 반응(전하 전달)이 일어날', 
+                 '때 겪게 되는 장벽/지연 효과입니다.', 
+                 'Zᴡ는 입자 내부로 느리게 확산되는',
+                 '이온의 정체 현상을 나타냅니다.'], '#38bdf8');
 
-            ctx.restore(); // 스케일 리셋
+            ctx.restore();
         }
 
         function drawEIS(t) {
             ctx.save();
-            
-            // 상위 루프의 카메라 이동/확대 효과 무시, 화면 절대 좌표계 리셋
             ctx.setTransform(1, 0, 0, 1, 0, 0);
-            
-            // 가상 해상도 (Virtual Resolution)
-            const VW = 1000;
-            const VH = 650; 
-            
-            const zoom = Math.min(width / VW, height / VH) * 0.8; 
-            
-            ctx.translate(width / 2, height / 2);
-            ctx.scale(zoom, zoom);
-            ctx.translate(-VW / 2, -VH * 7 / 12);
+            const VW = 1000, VH = 650, zoom = Math.min(width / VW, height / VH) * 0.8; 
+            ctx.translate(width / 2, height / 2); ctx.scale(zoom, zoom); ctx.translate(-VW / 2, -VH * 7 / 12);
 
             const cx = VW / 2, w = VW * 0.95, x = cx - w / 2, top = VH * 0.05;
             const f = eisState.frequency, logF = Math.log10(f), slider = eisState.slider / 100;
             
             const panel = (px, py, pw, ph, title) => { 
-                ctx.fillStyle = '#0f172a'; ctx.fillRect(px, py, pw, ph); 
-                ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.strokeRect(px, py, pw, ph); 
+                drawRoundRect(ctx, px, py, pw, ph, 0); ctx.fillStyle = '#0f172a'; ctx.fill(); 
+                ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; ctx.stroke(); 
                 ctx.fillStyle = '#e2e8f0'; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left'; 
                 ctx.fillText(title, px + 16, py + 24); 
             };
             
-            panel(x, top, w, 85, 'Step 2  |  주파수–파형–나이키스트 연동');
+            panel(x, top, w, 85, 'Step 2  |  주파수–파형–나이키스트 연동 (배터리 내부 진단 원리)');
             const sx = x + 40, sy = top + 55, sw = w - 80;
             
-            // 슬라이더 바
             ctx.strokeStyle = '#334155'; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + sw, sy); ctx.stroke(); 
             ctx.strokeStyle = '#06b6d4'; ctx.lineWidth = 10; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(sx + sw * slider, sy); ctx.stroke(); 
             ctx.beginPath(); ctx.arc(sx + sw * slider, sy, 10, 0, Math.PI * 2); ctx.fillStyle = '#f8fafc'; ctx.fill(); 
@@ -1681,9 +1434,8 @@
             ctx.fillStyle = '#94a3b8'; ctx.font = '12px sans-serif'; ctx.textAlign = 'left'; ctx.fillText('저주파 0.1 Hz', sx, sy + 22); 
             ctx.textAlign = 'right'; ctx.fillText('고주파 100 kHz', sx + sw, sy + 22); 
             ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'center'; 
-            ctx.fillText(`현재 f = ${f >= 1000 ? (f / 1000).toFixed(1) + ' kHz' : f.toFixed(1) + ' Hz'}`, sx + sw * slider, sy - 20);
+            ctx.fillText(`현재 진단 주파수 f = ${f >= 1000 ? (f / 1000).toFixed(1) + ' kHz' : f.toFixed(1) + ' Hz'}`, sx + sw * slider, sy - 20);
             
-            // 3단 구역 분할
             const gap = 16, waveW = w * 0.28, infoW = w * 0.28, plotW = w - waveW - infoW - gap * 2;
             const boxY = top + 100, boxH = VH * 0.54; 
             const waveX = x, plotX = x + waveW + gap, infoX = plotX + plotW + gap;
@@ -1691,7 +1443,6 @@
             panel(waveX, boxY, waveW, boxH, 'AC 입력 주파수'); 
             panel(plotX, boxY, plotW, boxH, 'Nyquist Plot  |  −Im(Z) 대 Re(Z)');
             
-            // 1. 파형 렌더링
             const mid = boxY + boxH * 0.55, amp = boxH * 0.22, cycles = 1 + slider * 12, pad = 24;
             ctx.strokeStyle = '#475569'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(waveX + pad, mid); ctx.lineTo(waveX + waveW - pad, mid); ctx.stroke(); 
             ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 3; ctx.beginPath(); 
@@ -1704,17 +1455,14 @@
             ctx.beginPath(); ctx.arc(waveX + pad + wv_q * (waveW - pad * 2), mid - Math.sin(wv_q * Math.PI * 2 * cycles) * amp, 6, 0, Math.PI * 2); 
             ctx.fillStyle = '#f8fafc'; ctx.fill();
             
-            // 2. 나이퀴스트 플롯 렌더링
             const px = plotX + 50, py = boxY + 45, pw = plotW - 75, ph = boxH - 85;
             const r0 = 0.10, rct = 0.42, tail = 0.28, maxX = 0.92, maxY = 0.35;
             const mx = z => px + z / maxX * pw, my = im => py + ph - im / maxY * ph;
             
-            // X, Y 축
             ctx.strokeStyle = '#64748b'; ctx.lineWidth = 1.5; ctx.beginPath(); 
             ctx.moveTo(px, py + ph); ctx.lineTo(px + pw, py + ph); 
             ctx.moveTo(px, py); ctx.lineTo(px, py + ph); ctx.stroke();
             
-            // 궤적
             ctx.strokeStyle = '#38bdf8'; ctx.lineWidth = 4; ctx.beginPath(); 
             for (let i = 0; i <= 120; i++) { 
                 const a = i * Math.PI / 120, z_val = r0 + rct * (1 - Math.cos(a)) / 2, im_val = rct * Math.sin(a) / 2; 
@@ -1725,148 +1473,101 @@
             
             let z, im, region, cause, color; 
             if (f > 300) { 
-                z = r0; im = 0; region = '고주파 · Rₛ'; cause = '오믹 저항'; color = '#facc15'; 
+                z = r0; im = 0; region = '고주파 영역 (도선/전해질 분석)'; cause = '오믹 저항 (도선 분리 등 고장 판단)'; color = '#facc15'; 
             } else if (f >= 1) { 
                 const p = Math.max(0, Math.min(1, (Math.log10(300) - logF) / Math.log10(300))); 
                 const a = p * Math.PI; z = r0 + rct * (1 - Math.cos(a)) / 2; im = rct * Math.sin(a) / 2; 
-                region = '중주파 · R꜀ₜ ∥ Cₔₗ'; cause = '전하 전달 반응 및 이중층'; color = '#f472b6'; 
+                region = '중주파 영역 (계면/SEI 분석)'; cause = '전하 전달 저항 (열화나 SEI 두께 판단)'; color = '#f472b6'; 
             } else { 
                 const p = Math.max(0, Math.min(1, -logF)); 
                 z = r0 + rct + tail * p; im = tail * p; 
-                region = '저주파 · Warburg'; cause = 'Li⁺ 이온 내부 확산'; color = '#a3e635'; 
+                region = '저주파 영역 (확산 분석)'; cause = '내부 이온 확산 능력 (소재 구조 손상 판단)'; color = '#a3e635'; 
             }
 
-            // 벡터 점선
-            const orgX = mx(0), orgY = my(0);     
-            const currX = mx(z), currY = my(im);  
+            const orgX = mx(0), orgY = my(0), currX = mx(z), currY = my(im);  
             
-            ctx.save();
-            ctx.setLineDash([5, 5]);
-            ctx.strokeStyle = '#94a3b8';
-            ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(orgX, orgY); ctx.lineTo(currX, currY); ctx.stroke();
-            ctx.restore();
+            ctx.save(); ctx.setLineDash([5, 5]); ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(orgX, orgY); ctx.lineTo(currX, currY); ctx.stroke(); ctx.restore();
 
-            const zMag = Math.sqrt(z * z + im * im);
-            const zAng = Math.atan2(im, z) * 180 / Math.PI;
-            const canvasAng = Math.atan2(currY - orgY, currX - orgX); 
-
-            // 각도 표시
+            const zMag = Math.sqrt(z * z + im * im), zAng = Math.atan2(im, z) * 180 / Math.PI, canvasAng = Math.atan2(currY - orgY, currX - orgX); 
             const arcRad = 45; 
-            ctx.beginPath(); ctx.arc(orgX, orgY, arcRad, 0, canvasAng, true);
-            ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 1.5; ctx.stroke();
-
-            const arcTextX = orgX + (arcRad + 26) * Math.cos(canvasAng / 2);
-            const arcTextY = orgY + (arcRad + 26) * Math.sin(canvasAng / 2);
-            ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 13px sans-serif';
-            ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.beginPath(); ctx.arc(orgX, orgY, arcRad, 0, canvasAng, true); ctx.strokeStyle = '#f8fafc'; ctx.lineWidth = 1.5; ctx.stroke();
+            const arcTextX = orgX + (arcRad + 26) * Math.cos(canvasAng / 2), arcTextY = orgY + (arcRad + 26) * Math.sin(canvasAng / 2);
+            ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 13px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
             if(zMag > 0.01) ctx.fillText(`θ=${zAng.toFixed(1)}°`, arcTextX, arcTextY);
 
-            // 크기 표시
-            const midX = (orgX + currX) / 2;
-            const midY = (orgY + currY) / 2;
-            ctx.save();
-            ctx.translate(midX, midY);
-            ctx.rotate(canvasAng);
-            ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
-            ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 14px sans-serif';
-            ctx.fillText(`|Z|=${zMag.toFixed(2)}`, 0, -8);
-            ctx.restore();
+            const midX = (orgX + currX) / 2, midY = (orgY + currY) / 2;
+            ctx.save(); ctx.translate(midX, midY); ctx.rotate(canvasAng); ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+            ctx.fillStyle = '#67e8f9'; ctx.font = 'bold 14px sans-serif'; ctx.fillText(`|Z|=${zMag.toFixed(2)}`, 0, -8); ctx.restore();
 
-            // 임피던스 점
             ctx.beginPath(); ctx.arc(currX, currY, 8, 0, Math.PI * 2); ctx.fillStyle = '#f8fafc'; ctx.fill(); 
             ctx.strokeStyle = color; ctx.lineWidth = 4; ctx.stroke(); 
             
-            // X축, Y축 라벨 첨자 R_s, R_{ct} 로 변경 완료
             ctx.fillStyle = '#facc15'; ctx.font = '12px sans-serif'; ctx.textAlign = 'center'; 
             ctx.fillText('Rₛ', mx(r0), py + ph + 22); ctx.fillText('Rₛ + R꜀ₜ', mx(r0 + rct), py + ph + 22); 
             ctx.fillStyle = '#94a3b8'; ctx.fillText("Re(Z)", px + pw, py + ph + 38); 
             ctx.save(); ctx.translate(px - 34, py + 25); ctx.rotate(-Math.PI / 2); ctx.fillText('−Im(Z)', 0, 0); ctx.restore(); 
 
-            // 3. 오른쪽 설명 상자
             const infoCardH = (boxH - gap) / 2;
             const infoCard = (i, title, textArr, accent) => {
                 const bx = infoX, by = boxY + i * (infoCardH + gap);
                 ctx.fillStyle = '#111c30'; ctx.strokeStyle = accent; ctx.lineWidth = 2;
-                ctx.beginPath(); ctx.roundRect(bx, by, infoW, infoCardH, 10); ctx.fill(); ctx.stroke();
+                drawRoundRect(ctx, bx, by, infoW, infoCardH, 10); ctx.fill(); ctx.stroke();
                 
                 ctx.fillStyle = accent; ctx.font = 'bold 14px sans-serif'; ctx.textAlign = 'left';
                 ctx.fillText(title, bx + 18, by + 28);
                 
                 textArr.forEach((line, n) => {
-                    const isHeader = n % 2 === 0;
-                    const extraY = n > 1 ? 12 : 0; 
-                    ctx.fillStyle = isHeader ? accent : '#cbd5e1';
-                    ctx.font = isHeader ? 'bold 13px sans-serif' : '12px sans-serif';
+                    const isHeader = n % 2 === 0; const extraY = n > 1 ? 12 : 0; 
+                    ctx.fillStyle = isHeader ? accent : '#cbd5e1'; ctx.font = isHeader ? 'bold 13px sans-serif' : '12px sans-serif';
                     ctx.fillText(line, bx + 18, by + 56 + n * 20 + extraY);
                 });
             };
 
             infoCard(0, '직교좌표계 (Cartesian)', [
-                '▶ Re(Z) 실수축',
-                '   실제 에너지 손실 (오믹 및 반응 저항)',
-                '▶ −Im(Z) 허수축',
-                '   전하 축적에 의한 교류 흐름 지연 효과'
+                '▶ Re(Z) 실수축', '   실제 에너지 손실 (오믹 및 반응 저항)',
+                '▶ −Im(Z) 허수축', '   전하 축적에 의한 교류 흐름 지연 효과'
             ], '#818cf8');
 
             infoCard(1, '극좌표계 (Polar)', [
-                '▶ |Z| 반경 (크기)',
-                '   교류 흐름을 방해하는 총 임피던스',
-                '▶ θ 위상각 (각도)',
-                '   전압·전류 시간차 (0°는 순수저항)'
+                '▶ |Z| 반경 (크기)', '   교류 흐름을 방해하는 총 임피던스(막힘 정도)',
+                '▶ θ 위상각 (각도)', '   전압·전류의 시간 지연 (0°는 지연 없음)'
             ], '#67e8f9');
 
-            // 4. 하단 상세 정보 카드 (Rs, Rct 사용)
             const cardsY = boxY + boxH + gap, cardW = (w - gap * 2) / 3; 
             const card = (i, title, text, accent) => { 
                 const bx = x + i * (cardW + gap); 
                 ctx.fillStyle = '#111c30'; ctx.strokeStyle = accent; ctx.lineWidth = 2; 
-                ctx.beginPath(); ctx.roundRect(bx, cardsY, cardW, 100, 10); ctx.fill(); ctx.stroke(); 
-                ctx.fillStyle = accent; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; 
-                ctx.fillText(title, bx + 18, cardsY + 30); 
+                drawRoundRect(ctx, bx, cardsY, cardW, 100, 10); ctx.fill(); ctx.stroke(); 
+                ctx.fillStyle = accent; ctx.font = 'bold 15px sans-serif'; ctx.textAlign = 'left'; ctx.fillText(title, bx + 18, cardsY + 30); 
                 ctx.fillStyle = '#cbd5e1'; ctx.font = '13px sans-serif'; 
                 text.forEach((line, n) => ctx.fillText(line, bx + 18, cardsY + 58 + n * 20)); 
             };
             
-            card(0, 'Rₛ · 고주파', ['등가회로: 직렬 Rs', '원인: 전해질·금속·접촉'], '#facc15'); 
-            card(1, 'R꜀ₜ ∥ Cₔₗ · 중주파', ['등가회로: 반원', '원인: 전하 전달·이중층'], '#f472b6'); 
-            card(2, 'Zᴡ · 저주파', ['등가회로: 45° 꼬리', '원인: Li⁺ 내부 확산'], '#a3e635');
+            card(0, '고주파 진단 (Rₛ)', ['교류가 매우 빠르게 진동하는 상태.', '전해질이나 접촉 단자의 물리적 끊어짐,', '노후화 여부를 즉시 파악할 수 있습니다.'], '#facc15'); 
+            card(1, '중주파 진단 (R꜀ₜ ∥ Cₔₗ)', ['계면에서 화학 반응이 일어나는 상태.', '활물질 표면의 SEI 막 두께가 두꺼워졌는지,', '반응이 저하되었는지 파악합니다.'], '#f472b6'); 
+            card(2, '저주파 진단 (Zᴡ)', ['교류가 느려 이온이 깊숙이 들어가는 상태.', '활물질 입자 내부 구조가 붕괴되어', '확산이 막혀있는지 분석합니다.'], '#a3e635');
             
             ctx.fillStyle = color; ctx.font = 'bold 16px sans-serif'; ctx.textAlign = 'center'; 
-            ctx.fillText(`현재 위치: ${region}  —  ${cause}`, cx, cardsY + 145);
-            
+            ctx.fillText(`현재 분석: ${region}  —  ${cause}`, cx, cardsY + 145);
             ctx.restore();
         }
 
-        // 고상확산 격자를 흑연(탄소) 구조를 모사하는 육각 격자(Hexagonal Lattice)로 변경
         function drawSolidDiffusionLattice(px, py, time) {
-            ctx.save(); ctx.translate(px, py);
-            ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; 
-            const s = 18; 
-            const w = Math.sqrt(3) * s; 
-            const h = 2 * s;
-            
+            ctx.save(); ctx.translate(px, py); ctx.strokeStyle = '#334155'; ctx.lineWidth = 2; 
+            const s = 18, w = Math.sqrt(3) * s, h = 2 * s;
             for(let q=-4; q<=4; q++) {
                 for(let r=-3; r<=3; r++) {
-                    const cx = w * (q + (Math.abs(r)%2)/2);
-                    const cy = 1.5 * s * r;
-                    
+                    const cx = w * (q + (Math.abs(r)%2)/2), cy = 1.5 * s * r;
                     ctx.beginPath();
                     for(let i=0; i<6; i++) {
-                        const angle = Math.PI / 3 * i - Math.PI / 6;
-                        const nx = cx + s * Math.cos(angle);
-                        const ny = cy + s * Math.sin(angle);
+                        const angle = Math.PI / 3 * i - Math.PI / 6, nx = cx + s * Math.cos(angle), ny = cy + s * Math.sin(angle);
                         if (i===0) ctx.moveTo(nx, ny); else ctx.lineTo(nx, ny);
                     }
-                    ctx.closePath();
-                    ctx.stroke();
-                    
+                    ctx.closePath(); ctx.stroke();
                     for(let i=0; i<6; i++) {
-                        const angle = Math.PI / 3 * i - Math.PI / 6;
-                        const nx = cx + s * Math.cos(angle);
-                        const ny = cy + s * Math.sin(angle);
-                        ctx.beginPath(); ctx.arc(nx, ny, 3.5, 0, Math.PI*2); 
-                        ctx.fillStyle = '#1e293b'; ctx.fill(); 
+                        const angle = Math.PI / 3 * i - Math.PI / 6, nx = cx + s * Math.cos(angle), ny = cy + s * Math.sin(angle);
+                        ctx.beginPath(); ctx.arc(nx, ny, 3.5, 0, Math.PI*2); ctx.fillStyle = '#1e293b'; ctx.fill(); 
                     }
                 }
             }
@@ -1875,23 +1576,16 @@
 
         function drawTutorialParticle(t) {
             if (activeAnimState.spm || activeAnimState.mode === 'anatomy' || activeAnimState.mode === 'soc_graph' || activeAnimState.mode === 'ecm_model' || activeAnimState.mode === 'eis' || activeAnimState.mode === 'p2d') return;
-            const cy = height / 2;
-            let px = getCanvasX(particle.x); let py = cy;
-            
+            const cy = height / 2; let px = getCanvasX(particle.x), py = cy;
             if (activeAnimState.mode === 'transport') px += Math.sin(t * 0.002) * 30;
             else if (activeAnimState.mode === 'vibration') px += Math.sin(t * 0.05) * 8;
             else if (activeAnimState.mode === 'reaction') px += (Math.abs(Math.sin(t * 0.003)) - 0.5) * 15;
             
             let rad = particle.radius;
             if (activeAnimState.mode === 'solid_diff') {
-                const fixedLatticeX = getCanvasX(0.85); 
-                drawSolidDiffusionLattice(fixedLatticeX, cy, t);
-                px = fixedLatticeX + Math.sin(t*0.0003) * 30;
-                py = cy + Math.cos(t*0.0005) * 30;
-                cam.targetX = fixedLatticeX;
-            } else if (activeAnimState.stress) {
-                rad = 6 + Math.sin(t*0.01) * 2;
-            }
+                const fixedLatticeX = getCanvasX(0.85); drawSolidDiffusionLattice(fixedLatticeX, cy, t);
+                px = fixedLatticeX + Math.sin(t*0.0003) * 30; py = cy + Math.cos(t*0.0005) * 30; cam.targetX = fixedLatticeX;
+            } else if (activeAnimState.stress) rad = 6 + Math.sin(t*0.01) * 2;
 
             ctx.save(); ctx.translate(px, py);
             if (activeAnimState.stress) {
@@ -1905,43 +1599,38 @@
             ctx.fillStyle = '#fff'; ctx.beginPath(); ctx.arc(0,0, Math.max(2, rad*0.7), 0, Math.PI*2); ctx.fill();
             if (cam.scale > 2) { ctx.fillStyle = '#0f172a'; ctx.font = 'bold 5px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText("Li+", 0, 0); }
             ctx.restore();
-            
             if (activeAnimState.mode !== 'solid_diff') cam.targetX = px; 
         }
 
         function drawSandboxParticles(ch) {
             drawExternalWire(ch, true, sbElectrons, sbState.mode);
-            const cy = height/2; const cw = width*0.8; const ox = width*0.1; const wC = cw*0.4; const wE = cw*0.2;
-            
+            const cy = height/2, cw = width*0.8, ox = width*0.1, wC = cw*0.4, wE = cw*0.2;
             let liIons = [];
-            if(sbState.mode === 'charge') {
-                const movingCnt = Math.floor(sbState.cRate * 50);
-                for(let i=0; i<movingCnt; i++) liIons.push({x: ox+wC + Math.random()*wE, y: cy + (Math.random()-0.5)*ch});
-            } else if(sbState.mode === 'discharge') {
+            if(sbState.mode === 'charge' || sbState.mode === 'discharge') {
                 const movingCnt = Math.floor(sbState.cRate * 50);
                 for(let i=0; i<movingCnt; i++) liIons.push({x: ox+wC + Math.random()*wE, y: cy + (Math.random()-0.5)*ch});
             }
             ctx.fillStyle = '#38bdf8';
-            liIons.forEach(p => {
-                ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
-            });
+            liIons.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); });
         }
 
         function loop(t) {
+            t = t || performance.now(); // 시간 값 안전 보장
+            
+            // 컨테이너 크기 오류 시 렌더링 스킵 및 재조정
+            if (width === 0 || height === 0) resizeCanvas();
             if (width === 0) { requestAnimationFrame(loop); return; }
+            
             if (appMode === 'tutorial') {
                 particle.x += (particle.targetX - particle.x) * 0.05;
                 if (activeAnimState.mode === 'anatomy' || activeAnimState.mode === 'soc_graph' || activeAnimState.mode === 'ecm_model' || activeAnimState.mode === 'eis' || activeAnimState.mode === 'p2d' || activeAnimState.spm) cam.targetX = width/2;
             } else { 
-                physics.update(t); 
-                updateSandboxUI(); 
-                // 샌드박스 모드 시 카메라 시점이 잘리지 않도록 강제 정중앙 핏(Fit)
-                cam.targetX = width / 2;
-                cam.targetScale = 1.0; 
+                physics.update(t); updateSandboxUI(); cam.targetX = width / 2; cam.targetScale = 1.0; 
             }
 
-            if (cam.x === 0) { cam.x = width/2; cam.y = height/2; }
-            cam.x += (cam.targetX - cam.x) * 0.05; cam.scale += (cam.targetScale - cam.scale) * 0.05;
+            if (isNaN(cam.x) || cam.x === 0) { cam.x = width/2; cam.y = height/2; }
+            cam.x += ((cam.targetX || width/2) - cam.x) * 0.05; 
+            cam.scale += ((cam.targetScale || 1.0) - cam.scale) * 0.05;
 
             ctx.fillStyle = '#0a0f1a'; ctx.fillRect(0, 0, width, height);
             ctx.strokeStyle = 'rgba(255,255,255,0.02)'; ctx.lineWidth = 1;
@@ -1952,18 +1641,10 @@
             ctx.translate(width/2, height/2); ctx.scale(cam.scale, cam.scale); ctx.translate(-cam.x, -height/2);
 
             const batH = height * 0.55;
-            
-            if (activeAnimState.mode === 'soc_graph') {
-                drawSOCGraph(t);
-            } else if (activeAnimState.mode === 'ecm_model') {
-                drawECMModel();
-            } else if (activeAnimState.mode === 'eis') {
-                drawEIS(t);
-            } else {
-                drawBatteryDetailed(batH, t);
-                if (appMode === 'tutorial') drawTutorialParticle(t);
-                else drawSandboxParticles(batH);
-            }
+            if (activeAnimState.mode === 'soc_graph') drawSOCGraph(t);
+            else if (activeAnimState.mode === 'ecm_model') drawECMModel();
+            else if (activeAnimState.mode === 'eis') drawEIS(t);
+            else { drawBatteryDetailed(batH, t); if (appMode === 'tutorial') drawTutorialParticle(t); else drawSandboxParticles(batH); }
             
             ctx.restore();
             requestAnimationFrame(loop);
