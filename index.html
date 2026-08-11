@@ -98,15 +98,18 @@
             <button id="btn-prev" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-md text-sm font-semibold transition-colors disabled:opacity-30 disabled:cursor-not-allowed">이전</button>
             <button id="btn-next" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-md text-sm font-semibold shadow-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed">다음</button>
         </div>
-        <div id="header-sandbox-ctrl" class="hidden items-center gap-4">
+        <div id="header-sandbox-ctrl" class="hidden items-center gap-3">
+            <label class="text-xs text-gray-400">PyBaMM</label>
+            <select id="pybamm-dataset" class="bg-gray-800 border border-gray-700 text-gray-100 text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-blue-500">
+                <option value="Chen2020">Chen2020 · LG M50 NMC/Graphite</option>
+                <option value="Marquis2019">Marquis2019 · SPM benchmark</option>
+            </select>
+            <span id="param-status" class="text-[11px] text-gray-500 max-w-[170px] truncate">파라미터 준비 중…</span>
             <div class="flex bg-gray-800 rounded-lg p-1 border border-gray-700">
                 <button id="btn-discharge" class="px-4 py-1.5 text-sm font-semibold rounded-md text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">방전</button>
-                <button id="btn-idle" class="px-4 py-1.5 text-sm font-semibold rounded-md bg-blue-600 text-white shadow-md transition-colors">대기</button>
+                <button id="btn-idle" class="px-4 py-1.5 text-sm font-semibold rounded-md bg-gray-600 text-white shadow-md transition-colors">대기</button>
                 <button id="btn-charge" class="px-4 py-1.5 text-sm font-semibold rounded-md text-gray-300 hover:text-white hover:bg-gray-700 transition-colors">충전</button>
             </div>
-            <button id="btn-degradation" class="px-4 py-1.5 text-sm font-bold rounded-lg border border-yellow-600/50 text-yellow-500 hover:bg-yellow-950/30 transition-colors flex items-center gap-2">
-                <i data-lucide="alert-triangle" class="w-4 h-4"></i> 열화 모드 활성화
-            </button>
         </div>
     </header>
 
@@ -162,53 +165,94 @@
             </div>
         </aside>
 
-        <!-- Sidebar (Sandbox) -->
-        <aside id="sidebar-sandbox" class="w-[320px] bg-gray-900 border-l border-gray-800 p-5 flex flex-col gap-6 shrink-0 overflow-y-auto hidden">
+        <!-- Sidebar (Sandbox): SPM-only interactive simulator -->
+        <aside id="sidebar-sandbox" class="w-[360px] bg-gray-900 border-l border-gray-800 p-5 flex flex-col gap-5 shrink-0 overflow-y-auto hidden">
             <section class="flex flex-col gap-3">
-                <h2 class="text-sm font-semibold text-gray-400 uppercase flex items-center gap-2"><i data-lucide="activity" class="w-4 h-4"></i> 라이브 모니터</h2>
+                <h2 class="text-sm font-semibold text-gray-400 uppercase flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4"></i> SPM 라이브 모니터
+                </h2>
                 <div class="bg-gray-800 p-4 rounded-xl border border-gray-700">
-                    <div class="flex justify-between mb-2"><span class="text-sm text-gray-300">SOC</span><span id="val-soc" class="text-xl font-bold text-blue-400">0.0%</span></div>
-                    <div class="w-full bg-gray-700 rounded-full h-2"><div id="bar-soc" class="bg-blue-500 h-2 rounded-full transition-all" style="width: 0%"></div></div>
+                    <div class="flex justify-between mb-2">
+                        <span class="text-sm text-gray-300">SOC</span>
+                        <span id="val-soc" class="text-xl font-bold text-blue-400">100.0%</span>
+                    </div>
+                    <div class="w-full bg-gray-700 rounded-full h-2">
+                        <div id="bar-soc" class="bg-blue-500 h-2 rounded-full transition-all" style="width:100%"></div>
+                    </div>
                 </div>
                 <div class="grid grid-cols-2 gap-3">
-                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700"><p class="text-xs text-gray-400">단자 전압</p><p id="val-voltage" class="text-lg font-bold text-white">3.00 V</p></div>
-                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700"><p class="text-xs text-gray-400">전류</p><p id="val-current" class="text-lg font-bold text-white">0.00 A</p></div>
-                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700"><p class="text-xs text-gray-400">SEI 두께</p><p id="val-sei" class="text-lg font-bold text-yellow-500">10.0 nm</p></div>
-                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700"><p class="text-xs text-gray-400">SOH (수명)</p><p id="val-soh" class="text-lg font-bold text-green-400">100.0%</p></div>
+                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <p class="text-xs text-gray-400">단자 전압</p><p id="val-voltage" class="text-lg font-bold text-white">— V</p>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <p class="text-xs text-gray-400">전류</p><p id="val-current" class="text-lg font-bold text-white">0.00 A</p>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <p class="text-xs text-gray-400">OCV</p><p id="val-ocv" class="text-lg font-bold text-cyan-300">— V</p>
+                    </div>
+                    <div class="bg-gray-800 p-3 rounded-xl border border-gray-700">
+                        <p class="text-xs text-gray-400">시간</p><p id="val-time" class="text-lg font-bold text-white">0.0 s</p>
+                    </div>
                 </div>
             </section>
+
             <hr class="border-gray-800">
+
             <section class="flex flex-col gap-5">
                 <h2 class="text-sm font-semibold text-gray-400 uppercase flex items-center gap-2">
-                    <i data-lucide="sliders" class="w-4 h-4"></i> 파라미터 제어
+                    <i data-lucide="sliders" class="w-4 h-4"></i> SPM 제어
                 </h2>
-                
-                <!-- 시간 배속 슬라이더 -->
+
+                <div>
+                    <div class="flex justify-between">
+                        <label class="text-sm text-gray-300">C-rate</label>
+                        <span id="label-crate" class="text-sm font-mono text-blue-400">1.0 C</span>
+                    </div>
+                    <input type="range" id="slider-crate" min="0.1" max="1" step="0.1" value="1"
+                           class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-blue-500">
+                    <div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>0.1 C</span><span>1.0 C</span></div>
+                </div>
+
                 <div>
                     <div class="flex justify-between">
                         <label class="text-sm text-gray-300">시간 배속</label>
                         <span id="label-timescale" class="text-sm font-mono text-purple-400">1x</span>
                     </div>
-                    <input type="range" id="slider-timescale" min="1" max="1000" step="1" value="1" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-purple-500">
-                    <div class="flex justify-between text-[10px] text-gray-500 mt-1">
-                        <span>현실 시간</span><span>최대 1000배속</span>
-                    </div>
+                    <input type="range" id="slider-timescale" min="1" max="1000" step="1" value="1"
+                           class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-purple-500">
+                    <div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>현실 시간</span><span>1000배속</span></div>
                 </div>
 
-                <div><div class="flex justify-between"><label class="text-sm text-gray-300">C-rate 속도</label><span id="label-crate" class="text-sm font-mono text-blue-400">1.0 C</span></div><input type="range" id="slider-crate" min="0.1" max="3" step="0.1" value="1" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer"></div>
-                <div><div class="flex justify-between"><label class="text-sm text-gray-300">주변 온도</label><span id="label-temp" class="text-sm font-mono text-blue-400">25 ℃</span></div><input type="range" id="slider-temp" min="10" max="50" step="1" value="25" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer"></div>
-                <div class="opacity-40 pointer-events-none" id="cycle-control"><div class="flex justify-between"><label class="text-sm text-yellow-500">사이클 횟수</label><span id="label-cycle" class="text-sm font-mono text-yellow-400">1</span></div><input type="range" id="slider-cycle" min="1" max="1000" step="1" value="1" class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-yellow-500"></div>
-                
-                <!-- 샌드박스 정보 카드 박스 -->
-                <div class="mt-2 bg-gray-800/80 p-4 rounded-xl border border-gray-700 text-xs text-gray-300 leading-relaxed shadow-inner space-y-3">
-                    <p><strong class="text-blue-400">C-rate 속도:</strong> 배터리 충·방전 속도입니다. 1C는 1시간에 걸쳐 완충/완방하는 기준이며, 수치가 높을수록 저항 발열과 열화가 가속됩니다.</p>
-                    <p><strong class="text-blue-400">주변 온도:</strong> 온도가 높으면 이온 확산이 빨라져 저항이 줄지만, 전해질 부반응(열화) 속도도 기하급수적으로 증가합니다.</p>
-                    <hr class="border-gray-700">
-                    <p><strong class="text-yellow-500">SEI (고체전해질계면):</strong> 음극 표면에 전해질이 분해되어 쌓이는 얇은 막입니다. 열화 모드 시 음극(우측) 입자 표면에 동그랗게 두꺼워지는 것을 볼 수 있으며, 저항을 늘려 SOH를 갉아먹습니다.</p>
-                    <p><strong class="text-green-400">SOH (배터리 건강도):</strong> 초기 대비 현재 남은 최대 용량입니다. 열화 사이클과 발열에 의해 지속적으로 감소합니다.</p>
+                <div>
+                    <div class="flex justify-between">
+                        <label class="text-sm text-gray-300">방전 Cut-off 전압</label>
+                        <span id="label-cutoff" class="text-sm font-mono text-red-400">2.50 V</span>
+                    </div>
+                    <input type="range" id="slider-cutoff" min="2.0" max="3.5" step="0.01" value="2.5"
+                           class="w-full h-1.5 bg-gray-700 rounded-lg cursor-pointer accent-red-500">
+                    <div class="flex justify-between text-[10px] text-gray-500 mt-1"><span>2.00 V</span><span>3.50 V</span></div>
+                </div>
+
+                <button id="btn-reset-spm" type="button" class="w-full py-2.5 bg-gray-800 hover:bg-gray-700 border border-gray-700 rounded-lg text-sm font-semibold flex items-center justify-center gap-2">
+                    <i data-lucide="rotate-ccw" class="w-4 h-4"></i> SPM 초기화
+                </button>
+
+                <div class="bg-gray-800/80 p-4 rounded-xl border border-gray-700 text-xs text-gray-300 leading-relaxed shadow-inner space-y-3">
+                    <p><strong class="text-blue-400">C-rate:</strong> PyBaMM 파라미터 셋의 정격용량을 기준으로 전류를 결정합니다.</p>
+                    <p><strong class="text-cyan-400">수치해석:</strong> MATLAB <code>SPM2.m</code>의 구형 입자 Fick 확산 + TDMA + Butler–Volmer 계산 순서를 브라우저에서 그대로 수행합니다.</p>
+                    <p><strong class="text-yellow-400">온도/열화:</strong> 현재 MATLAB 코드에 온도 변화나 열화 상태변수가 없으므로 이 시뮬레이터에서도 해당 제어 및 SEI/SOH 항목을 제거했습니다.</p>
                 </div>
             </section>
+
+            <section class="bg-gray-950 border border-gray-800 rounded-xl p-3">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="text-xs font-semibold text-gray-400">SPM 기준 전압–SOC</span>
+                    <span id="graph-status" class="text-[10px] text-gray-500">SPM 계산 대기</span>
+                </div>
+                <canvas id="spmMiniGraph" class="w-full h-44 rounded-lg bg-gray-950"></canvas>
+            </section>
         </aside>
+
     </main>
 
     <script>
@@ -223,6 +267,10 @@
             }
         }
         safeCreateIcons();
+
+        function clamp(value, min, max) {
+            return Math.min(max, Math.max(min, value));
+        }
 
         // ---------------------------------------------------------
         // 1. Glossary Engine
@@ -833,75 +881,622 @@
         document.getElementById('intro-btn-discharge').onclick = () => { introMode = 'discharge'; };
 
         // ---------------------------------------------------------
-        // 4. Sandbox Setup
         // ---------------------------------------------------------
-        const sbState = { soc: 0, mode: 'idle', cRate: 1.0, temp: 25, cycle: 1, deg: false, timeScale: 1 };
-        const physics = {
-            baseCap: 100, nominalCapacityAh: 5, cap: 100, voltage: 3.0, current: 0, sei: 10, lastUpdate: null,
-            update(now) {
-                const dt = this.lastUpdate === null ? 0 : Math.min((now - this.lastUpdate) / 1000, 0.1);
-                this.lastUpdate = now;
-                const degF = sbState.deg ? sbState.cycle * (1 + (sbState.temp - 25)*0.02) : 0;
-                this.cap = this.baseCap * Math.exp(-0.00015 * degF); this.sei = 10 + 0.8 * Math.sqrt(degF);
-                const rInt = 0.05 + 0.00008 * degF;
-                
-                if (sbState.mode === 'charge') this.current = this.nominalCapacityAh * sbState.cRate;
-                else if (sbState.mode === 'discharge') this.current = -this.nominalCapacityAh * sbState.cRate;
-                else this.current = 0;
-                
-                if (sbState.mode !== 'idle') {
-                    const ds = (sbState.cRate * dt * sbState.timeScale) / 36;
-                    if (sbState.mode === 'charge') sbState.soc = Math.min(100, sbState.soc + ds);
-                    if (sbState.mode === 'discharge') sbState.soc = Math.max(0, sbState.soc - ds);
-                }
-                this.voltage = (3.0 + 1.2*(sbState.soc/100)) + (this.current * rInt);
+        // 4. Sandbox Setup — MATLAB SPM2.m port
+        // ---------------------------------------------------------
+        // Legacy renderer compatibility only; no UI or degradation state is exposed.
+        const physics = { sei: 10 };
+
+        const sbState = {
+            soc: 100,
+            mode: 'idle',
+            cRate: 1.0,
+            cutoff: 2.50,
+            dataset: 'Chen2020',
+            timeScale: 1,
+            runningDirection: null,
+            lastFrame: null
+        };
+
+        // PyBaMM's ParameterValues are dictionary-like and expose SI-unit
+        // parameter names. The browser keeps a normalized subset needed by
+        // this MATLAB SPM implementation.
+        // PyBaMM runtime parameter loader: all SPM material/cell data and
+        // function-valued parameters are downloaded from the official PyBaMM
+        // source at runtime. Nothing is used as an electrochemical fallback.
+        const PYBAMM_RAW = {
+            Chen2020: 'https://raw.githubusercontent.com/pybamm-team/PyBaMM/v25.12.0/src/pybamm/input/parameters/lithium_ion/Chen2020.py',
+            Marquis2019: 'https://raw.githubusercontent.com/pybamm-team/PyBaMM/v25.12.0/src/pybamm/input/parameters/lithium_ion/Marquis2019.py'
+        };
+        const PARAM_KEYS = {
+            Q:'Nominal cell capacity [A.h]', I:'Current function [A]', H:'Electrode height [m]', W:'Electrode width [m]',
+            ce:'Initial concentration in electrolyte [mol.m-3]', T:'Reference temperature [K]',
+            lower:'Lower voltage cut-off [V]', upper:'Upper voltage cut-off [V]',
+            n:{r:'Negative particle radius [m]',D:'Negative particle diffusivity [m2.s-1]',cMax:'Maximum concentration in negative electrode [mol.m-3]',L:'Negative electrode thickness [m]',eps:'Negative electrode active material volume fraction',c0:'Initial concentration in negative electrode [mol.m-3]',alpha:'Negative electrode charge transfer coefficient'},
+            p:{r:'Positive particle radius [m]',D:'Positive particle diffusivity [m2.s-1]',cMax:'Maximum concentration in positive electrode [mol.m-3]',L:'Positive electrode thickness [m]',eps:'Positive electrode active material volume fraction',c0:'Initial concentration in positive electrode [mol.m-3]',alpha:'Positive electrode charge transfer coefficient'}
+        };
+        function extractPythonScalar(source,key){
+            const q=key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            const re=new RegExp(`[\"']${q}[\"']\\s*:\\s*([-+]?\\d+(?:\\.\\d+)?(?:[eE][-+]?\\d+)?)`);
+            const m=source.match(re); return m?Number(m[1]):null;
+        }
+        function extractPythonFunction(source,name){
+            const esc=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            const re=new RegExp('def\\s+'+esc+'\\s*\\([^)]*\\):([\\s\\S]*?)(?=\\n\\s*def\\s+|\\n\\s*# Call dict|$)');
+            const m=source.match(re); return m?m[1]:null;
+        }
+        function pyExprToJS(expr){
+            return expr.trim().replace(/#.*$/gm,'')
+                .replace(/pybamm\.constants\.R/g,'8.314462618').replace(/np\.exp/g,'Math.exp').replace(/np\.tanh/g,'Math.tanh')
+                .replace(/np\.sqrt/g,'Math.sqrt').replace(/np\.cosh/g,'Math.cosh').replace(/np\.log/g,'Math.log').replace(/np\.abs/g,'Math.abs')
+                .replace(/\bnp\./g,'Math.').replace(/\*\*/g,'**');
+        }
+        function compilePyBaMMFunction(source,name,args){
+            let body=extractPythonFunction(source,name);
+            if(!body) throw new Error(`PyBaMM function ${name} not found`);
+            const tripleD=String.fromCharCode(34).repeat(3), tripleS=String.fromCharCode(39).repeat(3);
+            body=body.replace(new RegExp(tripleD+'[\\s\\S]*?'+tripleD,'g'),'').replace(new RegExp(tripleS+'[\\s\\S]*?'+tripleS,'g'),'');
+            const statements=[];
+            const logical=[]; let acc='', depth=0;
+            for(const raw0 of body.split(/\r?\n/)){
+                const raw=raw0.trim(); if(!raw||raw.startsWith('#')) continue;
+                acc += (acc?' ':'') + raw;
+                depth += (raw.match(/\(/g)||[]).length - (raw.match(/\)/g)||[]).length;
+                if(depth<=0){ logical.push(acc); acc=''; depth=0; }
+            }
+            if(acc) logical.push(acc);
+            for(const raw of logical){
+                if(/^return\s+/.test(raw)){ statements.push('return '+pyExprToJS(raw.replace(/^return\s+/,''))+';'); continue; }
+                const m=raw.match(/^([A-Za-z_]\w*)\s*=\s*(.*)$/);
+                if(m) statements.push('let '+m[1]+' = '+pyExprToJS(m[2])+';');
+            }
+            if(!statements.some(x=>x.startsWith('return '))) throw new Error(`No return expression in ${name}`);
+            return new Function(...args,statements.join('\n'));
+        }
+        // PyBaMM parameter dictionaries sometimes serialize function-valued
+        // entries as two adjacent strings, e.g.
+        // "Negative electrode exchange-current density [A.m-2]"
+        // "": graphite_function,
+        // rather than a conventional single-line "key": function entry.
+        function extractFunctionName(source,paramLabel){
+            const q=paramLabel.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            const re=new RegExp(
+                `(?:["']${q}["']\\s*:\\s*|["']${q}["']\\s*\\n\\s*["']\\s*:\\s*)([A-Za-z_]\\w*)`,
+                'm'
+            );
+            const m=source.match(re);
+            if(m) return m[1];
+            // Handle the exact PyBaMM style where the function name follows
+            // an empty-string continuation key on the next line.
+            const re2=new RegExp(
+                `["']${q}["']\\s*\\n\\s*["']\\s*:\\s*([A-Za-z_]\\w*)`,
+                'm'
+            );
+            const m2=source.match(re2);
+            return m2?m2[1]:null;
+        }
+
+        function extractScalarParameter(source,key){
+            const q=key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            const patterns=[
+                new RegExp(`^[ \\t]*["']${q}["']\\s*:\\s*([-+]?\\d+(?:\\.\\d+)?(?:[eE][-+]?\\d+)?)\\s*,?\\s*$`,'m'),
+                new RegExp(`["']${q}["']\\s*:\\s*([-+]?\\d+(?:\\.\\d+)?(?:[eE][-+]?\\d+)?)`,'m')
+            ];
+            for(const re of patterns){ const m=source.match(re); if(m) return Number(m[1]); }
+            return null;
+        }
+
+        // PyBaMM's parameter dictionaries use function objects that cannot be
+        // represented directly in JSON.  These are ONLY references to the
+        // function names used by the selected official PyBaMM source file;
+        // the numerical expressions themselves are always compiled from the
+        // downloaded source text below.
+        const PYBAMM_FUNCTIONS = {
+            Chen2020: {
+                nD: 'graphite_LGM50_diffusivity_Chen2020',
+                pD: 'nmc_LGM50_diffusivity_Chen2020',
+                nOCP: 'graphite_LGM50_ocp_Chen2020',
+                pOCP: 'nmc_LGM50_ocp_Chen2020',
+                nJ0: 'graphite_LGM50_electrolyte_exchange_current_density_Chen2020',
+                pJ0: 'nmc_LGM50_electrolyte_exchange_current_density_Chen2020'
+            },
+            Marquis2019: {
+                nD: 'graphite_mcmb2528_diffusivity_Dualfoil1998',
+                pD: 'lico2_diffusivity_Dualfoil1998',
+                nOCP: 'graphite_mcmb2528_ocp_Dualfoil1998',
+                pOCP: 'lico2_ocp_Dualfoil1998',
+                nJ0: 'graphite_electrolyte_exchange_current_density_Dualfoil1998',
+                pJ0: 'lico2_electrolyte_exchange_current_density_Dualfoil1998'
             }
         };
 
+        function parsePyNumber(x){
+            if(x == null) return null;
+            const t=String(x).trim().replace(/[()]/g,'');
+            if(/^[-+]?\d*\.?\d+(?:[eE][-+]?\d+)?$/.test(t)) return Number(t);
+            const m=t.match(/^([-+]?\d*\.?\d+)\s*\*\s*10\s*\*\*\s*\(?([-+]?\d+)\)?$/);
+            return m ? Number(m[1])*10**Number(m[2]) : null;
+        }
+
+        function extractScalarParameter(source,key){
+            const q=key.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            const re=new RegExp('["\\\']'+q+'["\\\']\\s*:\\s*([^,\\n]+)','m');
+            const m=source.match(re);
+            return m ? parsePyNumber(m[1]) : null;
+        }
+
+        function extractFunctionName(source,paramLabel){
+            const q=paramLabel.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            // Same-line: "key": function_name
+            let m=source.match(new RegExp('["\\\']'+q+'["\\\']\\s*:\\s*([A-Za-z_]\\w*)','m'));
+            if(m) return m[1];
+            // PyBaMM continuation style:
+            // "key"\n "": function_name,
+            m=source.match(new RegExp('["\\\']'+q+'["\\\']\\s*\\n\\s*["\\\']\\s*:\\s*([A-Za-z_]\\w*)','m'));
+            return m ? m[1] : null;
+        }
+
+        function extractPythonFunction(source,name){
+            const esc=name.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');
+            const re=new RegExp('^\\s*def\\s+'+esc+'\\s*\\([^)]*\\):[\\s\\S]*?(?=^\\s*def\\s+|^\\s*# Call dict|\\Z)','m');
+            const m=source.match(re);
+            if(!m) return null;
+            return m[0].replace(/^\\s*def\\s+[^:]+:\s*/,'');
+        }
+
+        function pyExprToJS(expr){
+            let x=expr.trim();
+            x=x.replace(/#.*$/gm,'');
+            x=x.replace(/pybamm\.constants\.R/g,'8.314462618');
+            x=x.replace(/np\.(exp|tanh|sqrt|cosh|log|abs|sin|cos|arctan)/g,'Math.$1');
+            x=x.replace(/\bnp\.power/g,'Math.pow');
+            x=x.replace(/\*\*/g,'**');
+            x=x.replace(/\bTrue\b/g,'true').replace(/\bFalse\b/g,'false');
+            return x;
+        }
+
+        function compilePyBaMMFunction(source,name,args){
+            const body=extractPythonFunction(source,name);
+            if(!body) throw new Error(`PyBaMM function ${name} not found in source`);
+            const lines=body.split(/\r?\n/);
+            const argNames=new Set(args);
+            let inDoc=false, statements=[];
+            for(const raw0 of lines){
+                let raw=raw0.trim();
+                if(!raw) continue;
+                if(raw.startsWith('"""') || raw.startsWith("''")){ inDoc=!inDoc; continue; }
+                if(inDoc || raw.startsWith('#')) continue;
+                // Join ordinary Python continuation lines handled by a small
+                // parenthesis balance accumulator.
+                statements.push(raw);
+            }
+            const joined=[]; let acc='', depth=0;
+            for(const line of statements){
+                acc += (acc?' ':'') + line;
+                depth += (line.match(/\(/g)||[]).length - (line.match(/\)/g)||[]).length;
+                if(depth<=0){ joined.push(acc); acc=''; depth=0; }
+            }
+            if(acc) joined.push(acc);
+            const js=[];
+            for(let line of joined){
+                line=line.replace(/;\s*$/,'');
+                if(/^return\s+/.test(line)){
+                    js.push('return '+pyExprToJS(line.replace(/^return\s+/,''))+';');
+                } else {
+                    const m=line.match(/^([A-Za-z_]\w*)\s*=\s*(.+)$/);
+                    if(m){
+                        const target=m[1];
+                        js.push(argNames.has(target) ? target+' = '+pyExprToJS(m[2])+';' : 'let '+target+' = '+pyExprToJS(m[2])+';');
+                    }
+                }
+            }
+            if(!js.some(x=>x.startsWith('return '))) throw new Error(`No return expression in ${name}`);
+            try { return new Function(...args,js.join('\n')); }
+            catch(e){ throw new Error(`Could not compile ${name}: ${e.message}`); }
+        }
+
+        function makeConstantFunction(value){
+            return function(){ return value; };
+        }
+
+        function resolvePyBaMMFunction(source,paramLabel,fallbackName,args){
+            const functionName=extractFunctionName(source,paramLabel);
+            if(functionName){
+                return compilePyBaMMFunction(source,functionName,args);
+            }
+            const scalarValue=extractScalarParameter(source,paramLabel);
+            if(scalarValue !== null){
+                return makeConstantFunction(scalarValue);
+            }
+            if(fallbackName){
+                return compilePyBaMMFunction(source,fallbackName,args);
+            }
+            throw new Error(`Unable to resolve PyBaMM parameter ${paramLabel}`);
+        }
+
+        function parsePyBaMMParameterSource(source,paramSet){
+            const F=PYBAMM_FUNCTIONS[paramSet];
+            if(!F) throw new Error('Unsupported PyBaMM dataset');
+            const scalar=(key)=>extractScalarParameter(source,key);
+            const nD=resolvePyBaMMFunction(source,PARAM_KEYS.n.D,F.nD,['sto','T']);
+            const pD=resolvePyBaMMFunction(source,PARAM_KEYS.p.D,F.pD,['sto','T']);
+            const nOCP=resolvePyBaMMFunction(source,'Negative electrode OCP [V]',F.nOCP,['sto']);
+            const pOCP=resolvePyBaMMFunction(source,'Positive electrode OCP [V]',F.pOCP,['sto']);
+            const nJ0=resolvePyBaMMFunction(source,'Negative electrode exchange-current density [A.m-2]',F.nJ0,['c_e','c_s_surf','c_s_max','T']);
+            const pJ0=resolvePyBaMMFunction(source,'Positive electrode exchange-current density [A.m-2]',F.pJ0,['c_e','c_s_surf','c_s_max','T']);
+            const n={
+                r:scalar(PARAM_KEYS.n.r), D:nD,
+                cMax:scalar(PARAM_KEYS.n.cMax), L:scalar(PARAM_KEYS.n.L), eps:scalar(PARAM_KEYS.n.eps),
+                c0:scalar(PARAM_KEYS.n.c0), alpha:scalar(PARAM_KEYS.n.alpha)
+            };
+            const p={
+                r:scalar(PARAM_KEYS.p.r), D:pD,
+                cMax:scalar(PARAM_KEYS.p.cMax), L:scalar(PARAM_KEYS.p.L), eps:scalar(PARAM_KEYS.p.eps),
+                c0:scalar(PARAM_KEYS.p.c0), alpha:scalar(PARAM_KEYS.p.alpha)
+            };
+            const required=(key)=>{const v=scalar(key); if(v===null) throw new Error(`Missing PyBaMM scalar: ${key}`); return v;};
+            const result={
+                paramSet, source:'PyBaMM Raw', nominalCapacity:required(PARAM_KEYS.Q),
+                I:scalar(PARAM_KEYS.I), electrodeHeight:required(PARAM_KEYS.H), electrodeWidth:required(PARAM_KEYS.W),
+                ce:required(PARAM_KEYS.ce), T:required(PARAM_KEYS.T), lowerCutoff:required(PARAM_KEYS.lower), upperCutoff:required(PARAM_KEYS.upper),
+                n,p,
+                ocpN:nOCP, ocpP:pOCP,
+                j0N:nJ0, j0P:pJ0
+            };
+            if(!Number.isFinite(result.I)) result.I=result.nominalCapacity;
+            const numeric=[result.nominalCapacity,result.I,result.electrodeHeight,result.electrodeWidth,result.ce,result.T,result.lowerCutoff,result.upperCutoff,
+                result.n.r,result.n.cMax,result.n.L,result.n.eps,result.n.c0,result.n.alpha,
+                result.p.r,result.p.cMax,result.p.L,result.p.eps,result.p.c0,result.p.alpha];
+            if(numeric.some(v=>!Number.isFinite(v))) throw new Error('PyBaMM dataset has missing required scalar values');
+            // Smoke-test every downloaded function before accepting the dataset.
+            result.n.D(result.n.c0/result.n.cMax,result.T); result.p.D(result.p.c0/result.p.cMax,result.T);
+            result.ocpN(result.n.c0/result.n.cMax); result.ocpP(result.p.c0/result.p.cMax);
+            result.j0N(result.ce,result.n.c0,result.n.cMax,result.T); result.j0P(result.ce,result.p.c0,result.p.cMax,result.T);
+            return result;
+        }
+
+        async function fetchText(url){
+            const r=await fetch(url,{mode:'cors',cache:'no-store'});
+            if(!r.ok) throw new Error(`HTTP ${r.status}`);
+            return await r.text();
+        }
+        async function fetchPyBaMMParams(paramSet){
+            const status=document.getElementById('param-status');
+            if(status) status.textContent=`${paramSet}: PyBaMM 로딩…`;
+            const url=PYBAMM_RAW[paramSet];
+            if(!url) throw new Error('Unsupported PyBaMM dataset');
+            let source=null, errors=[];
+            try {
+                source=await fetchText(url);
+            } catch(e) {
+                errors.push('GitHub raw: '+e.message);
+            }
+            // GitHub Contents API is a fallback only for environments that block raw.githubusercontent.com.
+            if(!source){
+                const api='https://api.github.com/repos/pybamm-team/PyBaMM/contents/'+
+                    'src/pybamm/input/parameters/lithium_ion/'+paramSet+'.py?ref=v25.12.0';
+                try{
+                    const r=await fetch(api,{mode:'cors',cache:'no-store',headers:{Accept:'application/vnd.github+json'}});
+                    if(!r.ok) throw new Error(`HTTP ${r.status}`);
+                    const j=await r.json();
+                    const bin=atob(j.content.replace(/\s/g,''));
+                    const bytes=Uint8Array.from(bin,c=>c.charCodeAt(0));
+                    source=new TextDecoder('utf-8').decode(bytes);
+                }catch(e){ errors.push('GitHub API: '+e.message); }
+            }
+            if(!source) throw new Error(errors.join(' | '));
+            const parsed=parsePyBaMMParameterSource(source,paramSet);
+            if(status) status.textContent=`${paramSet}: PyBaMM ✓`;
+            return parsed;
+        }
+
+        // MATLAB SPM2.m finite-volume spherical diffusion + TDMA solver.
+        class PyBaMMSPMEngine {
+            constructor(params, options={}) {
+                this.params = params;
+                this.Nr = options.Nr ?? 20;
+                this.dt = options.dt ?? 0.1;
+                this.R = 8.314;
+                this.F = 96485;
+                this.reset();
+            }
+
+            makeParticle(p) {
+                const n=this.Nr, dr=p.r/(n+0.5);
+                const rr=new Float64Array(n);
+                for(let i=0;i<n;i++) rr[i]=(i+1)*dr;
+                rr[n-1]-=dr/2;
+                const D0=typeof p.D==='function'?p.D(p.c0/p.cMax,this.params.T):p.D;
+                const a=1/(this.dt*D0*3);
+                const sub=new Float64Array(n), main=new Float64Array(n), sup=new Float64Array(n);
+                main[0]=-a*rr[0]**3-(rr[0]**2)/dr; sup[0]=(rr[0]**2)/dr;
+                for(let i=1;i<n-1;i++){
+                    sub[i]=(rr[i-1]**2)/dr;
+                    main[i]=-a*(rr[i]**3-rr[i-1]**3)-((rr[i]**2+rr[i-1]**2)/dr);
+                    sup[i]=(rr[i]**2)/dr;
+                }
+                sub[n-1]=(rr[n-2]**2)/dr;
+                main[n-1]=-a*(rr[n-1]**3-rr[n-2]**3)-(rr[n-2]**2)/dr;
+                const c=new Float64Array(n); c.fill(p.c0);
+                return {p,dr,rr,a,sub,main,sup,c};
+            }
+
+            reset() {
+                this.time=0;
+                this.chargeAh=0;
+                this.cutoffHit=false;
+                this.particleN=this.makeParticle(this.params.n);
+                this.particleP=this.makeParticle(this.params.p);
+                this.current=0;
+                this.ocv=this.voltage=this.eta=0;
+                this.computeState();
+            }
+
+            setCurrent(I) {
+                this.current=I;
+                const p=this.params;
+                this.jP=(I/(p.electrodeHeight*p.electrodeWidth)/this.F)/(3*p.p.eps/p.p.r*p.p.L);
+                this.jN=(I/(p.electrodeHeight*p.electrodeWidth)/this.F)/(3*p.n.eps/p.n.r*p.n.L);
+            }
+
+            tdma(A,b) {
+                const n=b.length, cp=new Float64Array(n), dp=new Float64Array(n), x=new Float64Array(n);
+                cp[0]=A.sup[0]/A.main[0];
+                dp[0]=b[0]/A.main[0];
+                for(let i=1;i<n;i++){
+                    const denom=A.main[i]-A.sub[i]*cp[i-1];
+                    if(Math.abs(denom)<1e-30) throw new Error('TDMA singular matrix');
+                    if(i<n-1) cp[i]=A.sup[i]/denom;
+                    dp[i]=(b[i]-A.sub[i]*dp[i-1])/denom;
+                }
+                x[n-1]=dp[n-1];
+                for(let i=n-2;i>=0;i--) x[i]=dp[i]-cp[i]*x[i+1];
+                return x;
+            }
+
+            solveParticle(P, flux) {
+                const n=this.Nr, B=new Float64Array(n), c=P.c, a=P.a, rr=P.rr;
+                B[0]=-a*rr[0]**3*c[0];
+                for(let i=1;i<n-1;i++) B[i]=-a*(rr[i]**3-rr[i-1]**3)*c[i];
+                B[n-1]=-a*(rr[n-1]**3-rr[n-2]**3)*c[n-1]
+                    + flux*rr[n-1]**2/(typeof P.p.D==='function'?P.p.D(P.c[P.c.length-1]/P.p.cMax,this.params.T):P.p.D);
+                return this.tdma(P, B);
+            }
+
+            // PyBaMM Butler-Volmer kinetics using the selected dataset's
+            // exchange-current-density function.
+            bv(jj,j0,alpha,T) {
+                j0=Math.max(Math.abs(j0),1e-30);
+                if(Math.abs(alpha-0.5)<1e-12) return 2*this.R*T/this.F*Math.asinh(jj/(2*j0));
+                let eta=0;
+                for(let k=0;k<14;k++){
+                    const a=alpha, ac=1-alpha, x=this.F*eta/(this.R*T);
+                    const f=j0*(Math.exp(a*x)-Math.exp(-ac*x))-jj;
+                    const df=j0*this.F/(this.R*T)*(a*Math.exp(a*x)+ac*Math.exp(-ac*x));
+                    eta-=f/Math.max(df,1e-30);
+                }
+                return eta;
+            }
+
+            computeState() {
+                const P=this.params, cn=this.particleN.c, cp=this.particleP.c;
+                const thetaN=clamp(cn[this.Nr-1]/P.n.cMax,1e-8,1-1e-8);
+                const thetaP=clamp(cp[this.Nr-1]/P.p.cMax,1e-8,1-1e-8);
+                const ocvN=P.ocpN(thetaN), ocvP=P.ocpP(thetaP);
+                this.ocv=ocvP-ocvN;
+                // MATLAB: eta_p = BV(j_p,...), eta_n = BV(-j_n,...),
+                // eta = eta_p - eta_n, V = OCV + eta.
+                if (this.current===0) {
+                    this.etaP=0; this.etaN=0; this.eta=0;
+                } else {
+                    const j0P=P.j0P(P.ce,cp[this.Nr-1],P.p.cMax,P.T);
+                    const j0N=P.j0N(P.ce,cn[this.Nr-1],P.n.cMax,P.T);
+                    this.etaP=this.bv(this.jP,j0P,P.p.alpha,P.T);
+                    this.etaN=this.bv(-this.jN,j0N,P.n.alpha,P.T);
+                    this.eta=this.etaP-this.etaN;
+                }
+                this.voltage=this.ocv+this.eta;
+                this.thetaN=thetaN; this.thetaP=thetaP;
+            }
+
+            step() {
+                if(this.current===0){ this.computeState(); return this.state(); }
+                const P=this.params;
+                const oldN=this.particleN.c.slice(), oldP=this.particleP.c.slice();
+                // MATLAB's B is assembled from the old concentration.
+                this.particleN.c=oldN; this.particleP.c=oldP;
+                const nB=this.solveParticle(this.particleN, +this.jN);
+                const pB=this.solveParticle(this.particleP, -this.jP);
+                this.particleN.c=nB; this.particleP.c=pB;
+                this.time+=this.dt;
+                this.chargeAh += this.current*this.dt/3600;
+                this.computeState();
+                return this.state();
+            }
+
+            state() {
+                const soc=clamp(this.socFromStoich(),0,1);
+                return {time:this.time,soc,voltage:this.voltage,ocv:this.ocv,current:this.current,
+                    thetaN:this.thetaN,thetaP:this.thetaP,eta:this.eta,etaP:this.etaP||0,etaN:this.etaN||0};
+            }
+
+            socFromStoich() {
+                // SOC is the coulomb-counted full-cell state. The MATLAB
+                // model starts from its supplied initial concentrations.
+                return clamp(1 - this.chargeAh / Math.max(this.params.nominalCapacity, 1e-9), 0, 1);
+            }
+        }
+
+        let spmParams = null;
+        let spmEngine = null;
+        let spmHistory = [];
+        let spmAccum = 0;
+        let spmReferenceCurves = { discharge: [], charge: [] };
+        let referenceBusy = false;
+
+        async function loadSPMDataset(name) {
+            sbState.dataset=name;
+            try { spmParams=await fetchPyBaMMParams(name); } catch(err) { spmParams=null; spmEngine=null; const status=document.getElementById('param-status'); if(status) status.textContent=`${name}: PyBaMM 로딩 실패`; console.error(err); return; }
+            sbState.cutoff = spmParams.lowerCutoff ?? sbState.cutoff;
+            const cutoffSlider = document.getElementById('slider-cutoff');
+            if (cutoffSlider) cutoffSlider.value = sbState.cutoff;
+            const cutoffLabel = document.getElementById('label-cutoff');
+            if (cutoffLabel) cutoffLabel.textContent = `${sbState.cutoff.toFixed(2)} V`;
+            spmEngine=new PyBaMMSPMEngine(spmParams,{Nr:20,dt:0.1});
+            spmHistory=[];
+            spmReferenceCurves={discharge:[],charge:[]};
+            spmAccum=0;
+            window.__spmVisual=null;
+            sbState.lastFrame=null;
+            sbState.runningDirection=null;
+            document.getElementById('label-cutoff').textContent=`${sbState.cutoff.toFixed(2)} V`;
+            await buildReferenceCurves();
+            updateSandboxUI();
+        }
+
         function initSandboxMode() {
-            appMode = 'sandbox'; cam.targetScale = 1.0; cam.targetX = width/2;
-            document.getElementById('header-title').textContent = "인터랙티브 시뮬레이터 (자유 모드)";
-            document.getElementById('header-icon').setAttribute('data-lucide', 'battery-charging');
+            appMode='sandbox'; cam.targetScale=1.0; cam.targetX=width/2;
+            document.getElementById('header-title').textContent="인터랙티브 SPM 시뮬레이터";
+            document.getElementById('header-icon').setAttribute('data-lucide','battery-charging');
             document.getElementById('header-tutorial-ctrl').classList.add('hidden');
-            document.getElementById('header-sandbox-ctrl').classList.replace('hidden', 'flex');
+            document.getElementById('header-sandbox-ctrl').classList.replace('hidden','flex');
             document.getElementById('sidebar-tutorial').classList.add('hidden');
             document.getElementById('sidebar-sandbox').classList.remove('hidden');
             document.getElementById('cam-status').classList.add('opacity-0');
             safeCreateIcons();
+            loadSPMDataset(document.getElementById('pybamm-dataset').value);
         }
-        
-        const setSbMode = m => {
-            sbState.mode = m;
-            ['charge', 'discharge', 'idle'].forEach(id => {
-                document.getElementById('btn-'+id).className = `px-4 py-1.5 text-sm font-semibold rounded-md ${m===id ? (id==='charge'?'bg-blue-600':id==='discharge'?'bg-red-600':'bg-gray-600')+' text-white shadow-md' : 'text-gray-300 hover:bg-gray-700'}`;
+
+        const setSbMode = (m, newSegment=true) => {
+            const wasRunning = sbState.mode === 'charge' || sbState.mode === 'discharge';
+            sbState.mode=m;
+            if (m === 'charge' || m === 'discharge') sbState.runningDirection=m;
+            if (m === 'idle' && spmEngine) {
+                spmEngine.setCurrent(0);
+                // A user-requested return to IDLE starts a new measurement
+                // segment. An automatic cutoff stop does NOT reset the clock,
+                // so the endpoint remains visible and time stays frozen.
+                if (newSegment) {
+                    spmEngine.time=0;
+                    spmHistory=[];
+                    spmReferenceCurves={discharge:[],charge:[]};
+                    spmAccum=0;
+                    sbState.lastFrame=null;
+                    sbState.runningDirection=null;
+                    window.__spmVisual=null;
+                }
+            }
+            ['charge','discharge','idle'].forEach(id=>{
+                const el=document.getElementById('btn-'+id);
+                el.disabled = (m !== 'idle' && id !== 'idle');
+                el.className=`px-4 py-1.5 text-sm font-semibold rounded-md ${
+                    m===id ? (id==='charge'?'bg-blue-600':id==='discharge'?'bg-red-600':'bg-gray-600')+' text-white shadow-md'
+                    : 'text-gray-300 hover:bg-gray-700'} ${el.disabled?'opacity-40 cursor-not-allowed':''}`;
             });
+            document.getElementById('slider-crate').disabled = m !== 'idle';
+            document.getElementById('pybamm-dataset').disabled = m !== 'idle';
         };
-        document.getElementById('btn-charge').onclick = () => setSbMode('charge');
-        document.getElementById('btn-discharge').onclick = () => setSbMode('discharge');
-        document.getElementById('btn-idle').onclick = () => setSbMode('idle');
-        document.getElementById('slider-crate').oninput = e => { sbState.cRate = parseFloat(e.target.value); document.getElementById('label-crate').textContent = `${sbState.cRate.toFixed(1)} C`; };
-        document.getElementById('slider-temp').oninput = e => { sbState.temp = parseInt(e.target.value); document.getElementById('label-temp').textContent = `${sbState.temp} ℃`; };
-        document.getElementById('slider-cycle').oninput = e => { sbState.cycle = parseInt(e.target.value); document.getElementById('label-cycle').textContent = sbState.cycle; };
-        document.getElementById('btn-degradation').onclick = e => {
-            const button = e.currentTarget;
-            sbState.deg = true; button.classList.replace('text-yellow-500', 'text-red-500'); button.classList.replace('border-yellow-600/50', 'border-red-600');
-            button.innerHTML = `<i data-lucide="alert-triangle" class="w-4 h-4"></i> 열화 모드 동작 중`;
-            button.disabled = true;
-            document.getElementById('cycle-control').classList.remove('opacity-40', 'pointer-events-none');
-            safeCreateIcons();
+        document.getElementById('btn-charge').onclick=async()=>{
+            if(!spmEngine) return;
+            if(sbState.mode!=='idle' || spmEngine.state().soc>=0.999) return;
+            await buildReferenceForDirection('charge');
+            setSbMode('charge');
         };
-        document.getElementById('slider-timescale').oninput = e => { 
-            sbState.timeScale = parseInt(e.target.value); document.getElementById('label-timescale').textContent = `${sbState.timeScale}x`; 
+        document.getElementById('btn-discharge').onclick=async()=>{
+            if(!spmEngine) return;
+            if(sbState.mode!=='idle' || spmEngine.state().soc<=0.001) return;
+            await buildReferenceForDirection('discharge');
+            setSbMode('discharge');
         };
+        document.getElementById('btn-idle').onclick=()=>setSbMode('idle');
+
+        document.getElementById('slider-crate').oninput=async e=>{
+            if(sbState.mode!=='idle') return;
+            sbState.cRate=clamp(parseFloat(e.target.value)||1,0.1,1);
+            document.getElementById('label-crate').textContent=`${sbState.cRate.toFixed(1)} C`;
+            await buildReferenceCurves();
+        };
+        document.getElementById('slider-timescale').oninput=e=>{
+            sbState.timeScale=clamp(parseInt(e.target.value)||1,1,1000);
+            document.getElementById('label-timescale').textContent=`${sbState.timeScale}x`;
+        };
+        document.getElementById('slider-cutoff').oninput=e=>{
+            sbState.cutoff=clamp(parseFloat(e.target.value)||2.5,2,3.5);
+            document.getElementById('label-cutoff').textContent=`${sbState.cutoff.toFixed(2)} V`;
+        };
+        document.getElementById('pybamm-dataset').onchange=e=>loadSPMDataset(e.target.value);
+        document.getElementById('btn-reset-spm').onclick=()=>{
+            spmEngine.reset();
+            spmHistory=[];
+            spmReferenceCurves={discharge:[],charge:[]};
+            spmAccum=0;
+            sbState.lastFrame=null;
+            sbState.runningDirection=null;
+            window.__spmVisual=null;
+            setSbMode('idle');
+            updateSandboxUI();
+            drawSPMGraphMain();
+        };
+
+        async function buildReferenceForDirection(direction){
+            if(!spmEngine || !spmParams) return;
+            const sim=new PyBaMMSPMEngine(spmParams,{Nr:20,dt:0.1});
+            // Clone the CURRENT electrochemical state. This is important when
+            // reversing from discharge to charge: the concentration gradients
+            // already built up during discharge must be retained.
+            sim.time=0;
+            sim.chargeAh=spmEngine.chargeAh;
+            sim.particleN.c=spmEngine.particleN.c.slice();
+            sim.particleP.c=spmEngine.particleP.c.slice();
+            sim.computeState();
+            sim.setCurrent((direction==='discharge'?1:-1)*spmParams.nominalCapacity*sbState.cRate);
+            const pts=[];
+            for(let i=0;i<40000;i++){
+                const st=sim.step();
+                pts.push({time:st.time,soc:st.soc,v:st.voltage});
+                if(direction==='discharge' && (st.soc<=0.001 || st.voltage<=sbState.cutoff)) break;
+                if(direction==='charge' && st.soc>=0.999) break;
+                if((i&255)===0) await new Promise(r=>setTimeout(r,0));
+            }
+            spmReferenceCurves[direction]=pts;
+            window.__spmVisual=null;
+        }
+
+        async function buildReferenceCurves(){
+            if(referenceBusy || !spmParams) return;
+            referenceBusy=true;
+            const makeCurve = async(direction)=>{
+                const sim=new PyBaMMSPMEngine(spmParams,{Nr:20,dt:0.1});
+                sim.setCurrent((direction==='discharge'?1:-1)*spmParams.nominalCapacity*sbState.cRate);
+                const pts=[];
+                for(let i=0;i<40000;i++){
+                    const st=sim.step();
+                    pts.push({time:st.time,soc:st.soc,v:st.voltage});
+                    if(direction==='discharge' && (st.soc<=0.001 || st.voltage<=sbState.cutoff)) break;
+                    if(direction==='charge' && st.soc>=0.999) break;
+                    if((i&255)===0) await new Promise(r=>setTimeout(r,0));
+                }
+                return pts;
+            };
+            try{
+                const [d,c]=await Promise.all([makeCurve('discharge'),makeCurve('charge')]);
+                spmReferenceCurves={discharge:d,charge:c};
+            }finally{referenceBusy=false;}
+        }
 
         function updateSandboxUI() {
-            document.getElementById('val-soc').textContent = `${sbState.soc.toFixed(1)}%`; document.getElementById('bar-soc').style.width = `${sbState.soc}%`;
-            document.getElementById('val-voltage').textContent = `${physics.voltage.toFixed(2)} V`; document.getElementById('val-current').textContent = `${physics.current.toFixed(2)} A`;
-            document.getElementById('val-sei').textContent = `${physics.sei.toFixed(1)} nm`; document.getElementById('val-soh').textContent = `${(physics.cap/physics.baseCap*100).toFixed(1)}%`;
-            if((sbState.soc >= 100 && sbState.mode === 'charge') || (sbState.soc <= 0 && sbState.mode === 'discharge')) setSbMode('idle');
+            const st=spmEngine.state();
+            const soc=st.soc*100;
+            document.getElementById('val-soc').textContent=`${soc.toFixed(1)}%`;
+            document.getElementById('bar-soc').style.width=`${soc}%`;
+            document.getElementById('val-voltage').textContent=`${st.voltage.toFixed(3)} V`;
+            document.getElementById('val-current').textContent=`${st.current.toFixed(2)} A`;
+            document.getElementById('val-ocv').textContent=`${st.ocv.toFixed(3)} V`;
+            document.getElementById('val-time').textContent=`${st.time.toFixed(1)} s`;
+            const status=document.getElementById('graph-status');
+            status.textContent=`${sbState.dataset} · PyBaMM Raw`;
         }
 
-        // ---------------------------------------------------------
         // 5. Canvas Engine
         // ---------------------------------------------------------
         const canvas = document.getElementById('mainCanvas'); const ctx = canvas.getContext('2d');
@@ -1158,7 +1753,7 @@
             }
             
             const seiThickness = (appMode === 'sandbox' && physics.sei > 10) ? (physics.sei - 10) * 0.4 : 0;
-            const seiAlpha = (appMode === 'sandbox') ? Math.min(0.8, 0.2 + (sbState.cycle/3000)) : 0;
+            const seiAlpha = (appMode === 'sandbox') ? 0 : 0;
 
             for(let i=0; i<80; i++) {
                 const r1 = rnd(), r2 = rnd(), r3 = rnd();
@@ -1177,6 +1772,13 @@
                 else if (hx < ox + wC + wE) ctx.fillRect(ox + wC, cy - ch/2, wE, ch);
                 else ctx.fillRect(ox + wC + wE, cy - ch/2, wA + 12, ch);
                 drawExternalWire(ch, true, electrons, introMode); drawLithiumIons(ch, introMode, time);
+            } else if (appMode === 'sandbox') {
+                // Reuse the exact intro-page particle/electron animation, but
+                // drive its visual clock from the sandbox time-scale control.
+                const visualRate = 1 + Math.log10(Math.max(1, sbState.timeScale)) * 1.5;
+                const visualTime = time * visualRate;
+                drawExternalWire(ch, true, sbElectrons, sbState.mode);
+                drawLithiumIons(ch, sbState.mode, visualTime);
             }
             
             if (!isTransparent && cam.scale < 3) {
@@ -1603,15 +2205,83 @@
         }
 
         function drawSandboxParticles(ch) {
-            drawExternalWire(ch, true, sbElectrons, sbState.mode);
-            const cy = height/2, cw = width*0.8, ox = width*0.1, wC = cw*0.4, wE = cw*0.2;
-            let liIons = [];
-            if(sbState.mode === 'charge' || sbState.mode === 'discharge') {
-                const movingCnt = Math.floor(sbState.cRate * 50);
-                for(let i=0; i<movingCnt; i++) liIons.push({x: ox+wC + Math.random()*wE, y: cy + (Math.random()-0.5)*ch});
+            // Final page: replace the old degradation visualization with an
+            // SPM state visualization. The tutorial rendering above is untouched.
+            const cy=height/2, cw=width*0.76, ox=width*0.12;
+            const particleX=ox+cw*0.70;
+            ctx.save();
+
+            // electrode schematic
+            ctx.fillStyle='#111827';ctx.fillRect(ox,cy-ch/2,cw*0.42,ch);
+            ctx.fillStyle='#172554';ctx.fillRect(ox+cw*0.42,cy-ch/2,cw*0.16,ch);
+            ctx.fillStyle='#1f2937';ctx.fillRect(ox+cw*0.58,cy-ch/2,cw*0.42,ch);
+            ctx.fillStyle='#60a5fa';ctx.globalAlpha=.18;
+            ctx.fillRect(ox,cy-ch/2,cw*0.42,ch);
+            ctx.fillStyle='#f59e0b';ctx.fillRect(particleX,cy-90,120,180);
+            ctx.globalAlpha=1;
+
+            const P=spmEngine.particleN;
+            const C=spmEngine.particleP;
+            const r=72;
+            const drawProfile=(cx,cy0,particle,color)=>{
+                ctx.strokeStyle=color;ctx.lineWidth=2;ctx.beginPath();
+                for(let i=0;i<particle.c.length;i++){
+                    const rr=(i/(particle.c.length-1))*r;
+                    const xx=cx-r+rr*2;
+                    const theta=particle.c[i]/particle.p.cMax;
+                    const yy=cy0+50-theta*100;
+                    if(i===0)ctx.moveTo(xx,yy);else ctx.lineTo(xx,yy);
+                }
+                ctx.stroke();
+            };
+            drawProfile(ox+cw*0.18,cy,P,'#60a5fa');
+            drawProfile(ox+cw*0.79,cy,C,'#fbbf24');
+
+            ctx.fillStyle='#e2e8f0';ctx.font='bold 14px sans-serif';ctx.textAlign='center';
+            ctx.fillText('음극 입자 농도',ox+cw*0.18,cy-ch/2+24);
+            ctx.fillText('양극 입자 농도',ox+cw*0.79,cy-ch/2+24);
+
+            // Current state glow point on the actual voltage-SOC trajectory.
+            if(spmHistory.length>1){
+                const st=spmEngine.state();
+                const gx=ox+cw*0.42+cw*0.16*st.soc;
+                const gy=cy+120-(st.voltage-2.0)*55;
+                const grad=ctx.createRadialGradient(gx,gy,0,gx,gy,26);
+                grad.addColorStop(0,'rgba(34,211,238,1)');
+                grad.addColorStop(0.25,'rgba(34,211,238,.45)');
+                grad.addColorStop(1,'rgba(34,211,238,0)');
+                ctx.fillStyle=grad;ctx.beginPath();ctx.arc(gx,gy,26,0,Math.PI*2);ctx.fill();
+                ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(gx,gy,4,0,Math.PI*2);ctx.fill();
             }
-            ctx.fillStyle = '#38bdf8';
-            liIons.forEach(p => { ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill(); });
+            ctx.restore();
+        }
+
+        function drawSPMGraphMain(){
+            // Fixed, pre-plotted Voltage vs simulation Time curve; only the marker moves.
+            const left=62,right=width-28,top=Math.max(22,height*0.68),bottom=height-32;
+            const w=Math.max(10,right-left),h=Math.max(10,bottom-top);
+            const d=spmReferenceCurves.discharge||[],c=spmReferenceCurves.charge||[];
+            const all=d.concat(c),maxT=Math.max(1,...all.map(p=>p.time));
+            const yMin=2.0,yMax=4.35;
+            const X=t=>left+clamp(t,0,maxT)/maxT*w;
+            const Y=v=>bottom-(clamp(v,yMin,yMax)-yMin)/(yMax-yMin)*h;
+            ctx.save();
+            ctx.fillStyle='rgba(2,6,23,.96)';ctx.fillRect(left-34,top-25,w+48,h+43);
+            ctx.strokeStyle='#334155';ctx.strokeRect(left,top,w,h);
+            for(let i=0;i<=4;i++){const y=top+h*i/4;ctx.strokeStyle='rgba(148,163,184,.13)';ctx.beginPath();ctx.moveTo(left,y);ctx.lineTo(right,y);ctx.stroke();ctx.fillStyle='#94a3b8';ctx.font='9px sans-serif';ctx.textAlign='right';ctx.fillText((yMax-(yMax-yMin)*i/4).toFixed(1)+' V',left-7,y+3);}
+            ctx.textAlign='center';[0,.25,.5,.75,1].forEach(q=>ctx.fillText(`${(maxT*q/60).toFixed(1)} min`,left+w*q,bottom+14));
+            ctx.fillStyle='#e2e8f0';ctx.font='bold 11px sans-serif';ctx.textAlign='left';ctx.fillText(`Cell Voltage vs Time · ${sbState.dataset} · ${sbState.cRate.toFixed(1)}C`,left,top-9);
+            if(all.length===0){
+                ctx.fillStyle='#64748b';ctx.font='10px sans-serif';ctx.textAlign='center';
+                ctx.fillText('대기 상태 — 방전 또는 충전을 시작하면 새 시간축 플롯이 생성됩니다.',left+w/2,top+h/2);
+            }
+            const draw=(curve,label,color)=>{if(curve.length<2)return;ctx.beginPath();curve.forEach((p,i)=>{const x=X(p.time),y=Y(p.v);i?ctx.lineTo(x,y):ctx.moveTo(x,y);});ctx.strokeStyle=color;ctx.lineWidth=2;ctx.stroke();const e=curve[curve.length-1];ctx.fillStyle=color;ctx.font='9px sans-serif';ctx.textAlign='right';ctx.fillText(label,X(e.time)-4,Y(e.v)-5);};
+            draw(d,'방전','#f87171');draw(c,'충전','#60a5fa');
+            if(spmEngine && spmEngine.params){
+                const st=spmEngine.state(),dir=sbState.runningDirection,curve=dir?spmReferenceCurves[dir]:null;
+                if(curve&&curve.length){let best=curve[0],err=Infinity;for(const p of curve){const e=Math.abs(p.time-st.time);if(e<err){err=e;best=p;}}if(!window.__spmVisual)window.__spmVisual={time:best.time,v:best.v};window.__spmVisual.time+=(best.time-window.__spmVisual.time)*.22;window.__spmVisual.v+=(best.v-window.__spmVisual.v)*.22;const gx=X(window.__spmVisual.time),gy=Y(window.__spmVisual.v);const glow=ctx.createRadialGradient(gx,gy,0,gx,gy,22);glow.addColorStop(0,'rgba(255,255,255,1)');glow.addColorStop(.22,dir==='charge'?'rgba(96,165,250,.85)':'rgba(248,113,113,.85)');glow.addColorStop(1,'rgba(0,0,0,0)');ctx.fillStyle=glow;ctx.beginPath();ctx.arc(gx,gy,22,0,Math.PI*2);ctx.fill();ctx.shadowColor=dir==='charge'?'#60a5fa':'#f87171';ctx.shadowBlur=12;ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(gx,gy,4,0,Math.PI*2);ctx.fill();ctx.shadowBlur=0;}
+            }
+            ctx.restore();
         }
 
         function loop(t) {
@@ -1624,8 +2294,27 @@
             if (appMode === 'tutorial') {
                 particle.x += (particle.targetX - particle.x) * 0.05;
                 if (activeAnimState.mode === 'anatomy' || activeAnimState.mode === 'soc_graph' || activeAnimState.mode === 'ecm_model' || activeAnimState.mode === 'eis' || activeAnimState.mode === 'p2d' || activeAnimState.spm) cam.targetX = width/2;
-            } else { 
-                physics.update(t); updateSandboxUI(); cam.targetX = width / 2; cam.targetScale = 1.0; 
+            } else {
+                // Keep rendering at the browser's frame rate while the physical
+                // SPM integrator advances at a fixed 0.1 s timestep.
+                const frameDt = sbState.lastFrame === null ? 0 : Math.min((t-sbState.lastFrame)/1000,0.1);
+                sbState.lastFrame=t;
+                if(spmEngine && spmEngine.params){
+                    if(sbState.mode!=='idle'){
+                        const signedCurrent=sbState.mode==='discharge'?spmParams.nominalCapacity*sbState.cRate:-spmParams.nominalCapacity*sbState.cRate;
+                        spmEngine.setCurrent(signedCurrent);
+                        spmAccum += frameDt*sbState.timeScale;
+                        let guard=0;
+                        while(spmAccum>=spmEngine.dt && guard++<1000){
+                            const st=spmEngine.step();spmAccum-=spmEngine.dt;
+                            spmHistory.push({soc:st.soc,v:st.voltage,time:st.time});if(spmHistory.length>5000)spmHistory.shift();
+                            const done=(sbState.mode==='discharge'&&(st.soc<=0.001||st.voltage<=sbState.cutoff))||(sbState.mode==='charge'&&st.soc>=0.999);
+                            if(done){setSbMode('idle',false);spmEngine.setCurrent(0);spmAccum=0;break;}
+                        }
+                    }else{spmEngine.setCurrent(0);spmAccum=0;}
+                    updateSandboxUI();drawSPMGraphMain();
+                }
+                cam.targetX=width/2; cam.targetScale=1.0;
             }
 
             if (isNaN(cam.x) || cam.x === 0) { cam.x = width/2; cam.y = height/2; }
@@ -1644,9 +2333,10 @@
             if (activeAnimState.mode === 'soc_graph') drawSOCGraph(t);
             else if (activeAnimState.mode === 'ecm_model') drawECMModel();
             else if (activeAnimState.mode === 'eis') drawEIS(t);
-            else { drawBatteryDetailed(batH, t); if (appMode === 'tutorial') drawTutorialParticle(t); else drawSandboxParticles(batH); }
+            else { drawBatteryDetailed(batH, t); if (appMode === 'tutorial') drawTutorialParticle(t); }
             
             ctx.restore();
+            if (appMode === 'sandbox') drawSPMGraphMain();
             requestAnimationFrame(loop);
         }
         setTimeout(() => { loadTutorialStep(0); requestAnimationFrame(loop); }, 100);
