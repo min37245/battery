@@ -1299,8 +1299,10 @@
                 } else {
                     const j0P=P.j0P(P.ce,cp[this.Nr-1],P.p.cMax,P.T);
                     const j0N=P.j0N(P.ce,cn[this.Nr-1],P.n.cMax,P.T);
-                    this.etaP=this.bv(this.jP,j0P,P.p.alpha,P.T);
-                    this.etaN=this.bv(-this.jN,j0N,P.n.alpha,P.T);
+                    // jP/jN are molar surface fluxes for solid diffusion.
+                    // Butler-Volmer and j0 both use A m^-2, so convert here.
+                    this.etaP=this.bv(this.F*this.jP,j0P,P.p.alpha,P.T);
+                    this.etaN=this.bv(-this.F*this.jN,j0N,P.n.alpha,P.T);
                     this.eta=this.etaP-this.etaN;
                 }
                 this.voltage=this.ocv+this.eta;
