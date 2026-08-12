@@ -1444,7 +1444,9 @@
 
         async function buildReferenceForDirection(direction){
             if(!spmEngine || !spmParams) return;
-            const sim=new PyBaMMSPMEngine(spmParams,{Nr:20,dt:0.1});
+            // Use a coarser timestep only for the pre-plotted curve so low
+            // C-rates can be simulated through their full discharge duration.
+            const sim=new PyBaMMSPMEngine(spmParams,{Nr:20,dt:1});
             // Clone the CURRENT electrochemical state. This is important when
             // reversing from discharge to charge: the concentration gradients
             // already built up during discharge must be retained.
@@ -1455,7 +1457,9 @@
             sim.computeState();
             sim.setCurrent((direction==='discharge'?1:-1)*spmParams.nominalCapacity*sbState.cRate);
             const pts=[];
-            for(let i=0;i<40000;i++){
+            const remaining=direction==='discharge'?sim.state().soc:1-sim.state().soc;
+            const maxSteps=Math.ceil(Math.max(1,remaining)*3600/sbState.cRate/sim.dt*1.1);
+            for(let i=0;i<maxSteps;i++){
                 const st=sim.step();
                 pts.push({time:st.time,soc:st.soc,v:st.voltage});
                 if(direction==='discharge' && (st.soc<=0.001 || st.voltage<=sbState.cutoff)) break;
@@ -1470,11 +1474,13 @@
             if(referenceBusy || !spmParams) return;
             referenceBusy=true;
             const makeCurve = async(direction)=>{
-                const sim=new PyBaMMSPMEngine(spmParams,{Nr:20,dt:0.1});
+                const sim=new PyBaMMSPMEngine(spmParams,{Nr:20,dt:1});
                 sim.chargeAh=spmEngine?spmEngine.chargeAh:0;
                 sim.setCurrent((direction==='discharge'?1:-1)*spmParams.nominalCapacity*sbState.cRate);
                 const pts=[];
-                for(let i=0;i<40000;i++){
+                const remaining=direction==='discharge'?sim.state().soc:1-sim.state().soc;
+                const maxSteps=Math.ceil(Math.max(1,remaining)*3600/sbState.cRate/sim.dt*1.1);
+                for(let i=0;i<maxSteps;i++){
                     const st=sim.step();
                     pts.push({time:st.time,soc:st.soc,v:st.voltage});
                     if(direction==='discharge' && (st.soc<=0.001 || st.voltage<=sbState.cutoff)) break;
@@ -2266,7 +2272,10 @@
             const left=62,right=width-28,top=Math.max(22,height*0.68),bottom=height-32;
             const w=Math.max(10,right-left),h=Math.max(10,bottom-top);
             const d=spmReferenceCurves.discharge||[],c=spmReferenceCurves.charge||[];
-            const all=d.concat(c),maxT=Math.max(1,...all.map(p=>p.time));
+            const all=d.concat(c);
+            const activeCurve=sbState.runningDirection?spmReferenceCurves[sbState.runningDirection]:null;
+            const axisCurve=activeCurve&&activeCurve.length?activeCurve:all;
+            const maxT=Math.max(1,...axisCurve.map(p=>p.time));
             const yMin=2.0,yMax=4.35;
             const X=t=>left+clamp(t,0,maxT)/maxT*w;
             const Y=v=>bottom-(clamp(v,yMin,yMax)-yMin)/(yMax-yMin)*h;
