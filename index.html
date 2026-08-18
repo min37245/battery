@@ -1210,7 +1210,7 @@
             }
 
             makeParticle(p) {
-                const n=this.Nr, dr=p.r/(n+0.5);
+                const n=this.Nr, dr=p.r/(n-0.5);
                 const rr=new Float64Array(n);
                 for(let i=0;i<n;i++) rr[i]=(i+1)*dr;
                 rr[n-1]-=dr/2;
